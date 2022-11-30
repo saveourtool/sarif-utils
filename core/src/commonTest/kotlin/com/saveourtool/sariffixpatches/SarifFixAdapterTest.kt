@@ -6,7 +6,6 @@ import kotlin.test.assertEquals
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
-
 class SarifFixAdapterTest {
     @Test
     @Suppress("TOO_LONG_FUNCTION")
@@ -70,9 +69,12 @@ class SarifFixAdapterTest {
 
         val sarifSchema210: SarifSchema210 = Json.decodeFromString(sarif)
 
-        val result = sarifSchema210.runs.first().results?.first()!!
+        val result = sarifSchema210.runs.first()
+            .results
+            ?.first()!!
 
         assertEquals(result.message.text, "'x' is assigned a value but never used.")
-        assertEquals(result.locations?.first()?.physicalLocation?.artifactLocation?.uri, "file:///C:/dev/sarif/sarif-tutorials/samples/Introduction/simple-example.js")
+        assertEquals(result.locations?.first()?.physicalLocation?.artifactLocation
+            ?.uri, "file:///C:/dev/sarif/sarif-tutorials/samples/Introduction/simple-example.js")
     }
 }
