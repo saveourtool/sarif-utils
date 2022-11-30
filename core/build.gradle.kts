@@ -7,6 +7,10 @@ plugins {
     id("com.saveourtool.sariffixpatches.buildutils.kotlin-library")
 }
 
+application {
+    mainClass.set("com.saveourtool.sariffixpatches.cli.MainKt")
+}
+
 kotlin {
     val os = getCurrentOperatingSystem()
 
@@ -18,13 +22,11 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api(libs.okio)
-                implementation(projects.core)
             }
         }
     }
 
     linkProperExecutable(os)
-
 }
 
 /**
@@ -72,8 +74,4 @@ fun linkProperExecutable(os: DefaultOperatingSystem) {
     if (enabledExecutables != null && enabledExecutables != "all") {
         linkReleaseExecutableTaskProvider.enabled = false
     }
-}
-
-application {
-    mainClass.set("com.saveourtool.sariffixpatches.cli.MainKt")
 }
