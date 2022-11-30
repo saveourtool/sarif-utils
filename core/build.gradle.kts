@@ -22,6 +22,8 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api(libs.okio)
+                implementation(libs.kotlinx.serialization.json)
+                implementation(libs.sarif4k)
             }
         }
     }

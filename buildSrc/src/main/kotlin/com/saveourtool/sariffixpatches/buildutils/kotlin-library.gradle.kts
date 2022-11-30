@@ -68,16 +68,17 @@ kotlin {
             languageSettings.optIn("kotlin.RequiresOptIn")
         }
         val commonMain by getting
-        val commonTest by getting
+        val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test-common"))
+                implementation(kotlin("test-annotations-common"))
+            }
+        }
         val commonNonJsMain by creating {
             dependsOn(commonMain)
         }
         val commonNonJsTest by creating {
             dependsOn(commonTest)
-            dependencies {
-                implementation(kotlin("test-common"))
-                implementation(kotlin("test-annotations-common"))
-            }
         }
         val jvmMain by getting {
             dependsOn(commonNonJsMain)
