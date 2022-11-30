@@ -24,8 +24,3 @@ jobs:
             -Pdetekt.multiplatform.disabled=true
             -Pdiktat.githubActions=true
             --continue
-      - name: Upload SARIF report to Github
-        if: always()
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: build/reports/diktat/diktat-merged.sarif
