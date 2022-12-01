@@ -1,6 +1,6 @@
 rootProject.name = "sarifutils"
 
-include("core")
+include("fixpatches")
 
 dependencyResolutionManagement {
     repositories {
