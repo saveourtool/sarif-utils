@@ -82,20 +82,16 @@ class SarifFixAdapterTest {
             ?.uri, "file:///C:/dev/sarif/sarif-tutorials/samples/Introduction/simple-example.js")
     }
 
-
     @Test
     fun `should read SARIF file`() {
-        val sarifFile = "../resources/sarif-fixes.sarif".toPath()
-        val sarifSchema210 = Json.decodeFromString<SarifSchema210>(
-            fs.readFile(sarifFile)
-        )
+        val sarifFilePath = "src/commonTest/resources/sarif-fixes.sarif".toPath()
+        val sarifFile = fs.readFile(sarifFilePath)
+        val sarifSchema210 = Json.decodeFromString<SarifSchema210>(sarifFile)
 
         val result = sarifSchema210.runs.first()
             .results
             ?.first()!!
 
         assertEquals(result.message.text, "[ENUM_VALUE] enum values should be in selected UPPER_CASE snake/PascalCase format: NAme_MYa_sayR_")
-        assertEquals(result.locations?.first()?.physicalLocation?.artifactLocation
-            ?.uri, "file:///C:/dev/sarif/sarif-tutorials/samples/Introduction/simple-example.js")
     }
 }
