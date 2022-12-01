@@ -106,8 +106,8 @@ jobs:
         os: [ ubuntu-latest, macos-latest, windows-latest ]
 
     permissions:
-      checks: write-all
-      pull-requests: write-all
+      checks: write
+      pull-requests: write
 
     steps:
       - uses: actions/download-artifact@v3
