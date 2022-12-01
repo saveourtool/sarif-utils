@@ -1,0 +1,1 @@
+This project process Sarif files with `fix object` sections and apply changes to the test files.
