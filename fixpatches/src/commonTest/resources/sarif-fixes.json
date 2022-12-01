@@ -10,25 +10,6 @@
       },
       "results": [
         {
-          "level": "error",
-          "locations": [
-            {
-              "physicalLocation": {
-                "artifactLocation": {
-                  "uri": "src\\kotlin\\EnumValueSnakeCaseTest.kt",
-                  "uriBaseId": "%SRCROOT%"
-                },
-                "region": {
-                  "startColumn": 5,
-                  "startLine": 10
-                }
-              }
-            }
-          ],
-          "message": {
-            "text": "[ENUM_VALUE] enum values should be in selected UPPER_CASE snake/PascalCase format: NAme_MYa_sayR_"
-          },
-          "ruleId": "diktat-ruleset:identifier-naming",
           "fixes": [
             {
               "artifactChanges": [
@@ -39,13 +20,13 @@
                   "replacements": [
                     {
                       "deletedRegion": {
-                        "endColumn": 12,
+                        "endColumn": 19,
                         "endLine": 5,
-                        "startColumn": 3,
-                        "startLine": 5
+                        "startColumn": 5,
+                        "startLine": 10
                       },
                       "insertedContent": {
-                        "text": "  inputs.get(x) = 1"
+                        "text": "nameMyaSayR"
                       }
                     }
                   ]
@@ -55,7 +36,30 @@
                 "text": "[ENUM_VALUE] enum values should be in selected UPPER_CASE snake/PascalCase format: NAme_MYa_sayR_"
               }
             }
-          ]
+          ],
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src\\kotlin\\EnumValueSnakeCaseTest.kt",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "endColumn": 19,
+                  "endLine": 5,
+                  "snippet": {
+                    "text": "NAme_MYa_sayR_"
+                  },
+                  "startColumn": 5,
+                  "startLine": 10
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "[ENUM_VALUE] enum values should be in selected UPPER_CASE snake/PascalCase format: NAme_MYa_sayR_"
+          },
+          "ruleId": "diktat-ruleset:identifier-naming"
         }
       ],
       "tool": {

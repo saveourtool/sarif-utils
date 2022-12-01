@@ -20,6 +20,8 @@ class SarifFixAdapter(
     }
 
     private fun extractFixObject(sarifSchema210: SarifSchema210): List<FixPatch> {
+        // TODO Note, all fields could be absent
+        // TODO support multiline fixes. Should we? In microsoft they dont use endLine at all
         TODO("Not yet implemented")
     }
 }
