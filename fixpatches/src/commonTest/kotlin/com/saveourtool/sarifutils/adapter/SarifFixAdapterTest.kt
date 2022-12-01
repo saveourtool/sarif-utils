@@ -1,5 +1,6 @@
 package com.saveourtool.sarifutils.adapter
 
+import com.saveourtool.sarifutils.cli.adapter.SarifFixAdapter
 import com.saveourtool.sarifutils.cli.files.fs
 import com.saveourtool.sarifutils.cli.files.readFile
 import io.github.detekt.sarif4k.SarifSchema210
@@ -93,5 +94,16 @@ class SarifFixAdapterTest {
             ?.first()!!
 
         assertEquals(result.message.text, "[ENUM_VALUE] enum values should be in selected UPPER_CASE snake/PascalCase format: NAme_MYa_sayR_")
+    }
+
+    @Test
+    fun `sarif fix adapter test`() {
+        val sarifFilePath = "src/commonTest/resources/sarif-fixes.json".toPath()
+        val sarifFixAdapter = SarifFixAdapter(
+            sarifFile = sarifFilePath,
+            testFiles = emptyList()
+        )
+
+        sarifFixAdapter.process()
     }
 }
