@@ -84,7 +84,7 @@ class SarifFixAdapterTest {
 
     @Test
     fun `should read SARIF file`() {
-        val sarifFilePath = "src/commonTest/resources/sarif-fixes.sarif".toPath()
+        val sarifFilePath = "src/commonTest/resources/sarif-fixes.json".toPath()
         val sarifFile = fs.readFile(sarifFilePath)
         val sarifSchema210 = Json.decodeFromString<SarifSchema210>(sarifFile)
 
