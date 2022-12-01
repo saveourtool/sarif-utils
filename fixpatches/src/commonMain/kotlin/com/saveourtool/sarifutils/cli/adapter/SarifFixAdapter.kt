@@ -1,5 +1,7 @@
 package com.saveourtool.sarifutils.cli.adapter
 
+import com.saveourtool.sarifutils.cli.config.FileReplacements
+import com.saveourtool.sarifutils.cli.config.RuleReplacements
 import com.saveourtool.sarifutils.cli.files.fs
 import com.saveourtool.sarifutils.cli.files.readFile
 import io.github.detekt.sarif4k.Replacement
@@ -20,9 +22,9 @@ class SarifFixAdapter(
         )
         // A run object describes a single run of an analysis tool and contains the output of that run.
         sarifSchema210.runs.forEach {
-            it.extractFixObject()
+            val runReplacements: List<RuleReplacements?>? = it.extractFixObject()
+            applyReplacementsToFile(runReplacements, testFiles)
         }
-
     }
 
     // TODO what with nullability of returning type?
@@ -45,11 +47,15 @@ class SarifFixAdapter(
             }
         }
     }
+
+    private fun applyReplacementsToFile(runReplacements: List<RuleReplacements?>?, testFiles: List<Path>) {
+        runReplacements?.forEach { ruleReplacements ->
+            ruleReplacements?.forEach {
+                println("\n-------------------Replacement for file ${it.filePath}-------------------------\n")
+                it.replacements.forEach {
+                    println("Start line: ${it.deletedRegion.startLine}, start column ${it.deletedRegion.startColumn}, replacement: ${it.insertedContent?.text}")
+                }
+            }
+        }
+    }
 }
-
-typealias RuleReplacements = List<FileReplacements>
-
-data class FileReplacements(
-    val filePath: Path,
-    val replacements: List<Replacement>
-)
