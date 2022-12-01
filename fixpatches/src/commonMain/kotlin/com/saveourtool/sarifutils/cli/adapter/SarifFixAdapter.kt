@@ -15,5 +15,17 @@ class SarifFixAdapter(
         val sarifSchema210 = Json.decodeFromString<SarifSchema210>(
             fs.readFile(sarifFile)
         )
+        val fixPathces: List<FixPatch> = extractFixObject(sarifSchema210)
+
+    }
+
+    private fun extractFixObject(sarifSchema210: SarifSchema210): List<FixPatch> {
+        TODO("Not yet implemented")
     }
 }
+
+data class FixPatch(
+    val filePath: Path,
+    // TODO Type?
+    val fixes: List<Any>
+)
