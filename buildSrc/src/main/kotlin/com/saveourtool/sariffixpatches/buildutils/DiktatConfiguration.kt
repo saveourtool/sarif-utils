@@ -2,7 +2,7 @@
  * Configuration for diktat static analysis
  */
 
-package com.saveourtool.sariffixpatches.buildutils
+package com.saveourtool.sarifutils.buildutils
 
 import org.cqfn.diktat.plugin.gradle.DiktatExtension
 import org.cqfn.diktat.plugin.gradle.DiktatGradlePlugin

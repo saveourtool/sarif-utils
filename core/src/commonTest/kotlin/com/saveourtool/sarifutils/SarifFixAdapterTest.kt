@@ -1,4 +1,4 @@
-package com.saveourtool.sariffixpatches
+package com.saveourtool.sarifutils
 
 import io.github.detekt.sarif4k.SarifSchema210
 import kotlin.test.Test

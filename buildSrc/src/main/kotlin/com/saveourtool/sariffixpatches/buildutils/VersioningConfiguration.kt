@@ -2,7 +2,7 @@
  * Version configuration file.
  */
 
-package com.saveourtool.sariffixpatches.buildutils
+package com.saveourtool.sarifutils.buildutils
 
 import org.ajoberstar.grgit.Grgit
 import org.ajoberstar.grgit.gradle.GrgitServiceExtension

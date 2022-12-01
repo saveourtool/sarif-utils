@@ -1,7 +1,7 @@
 - name: DIKTAT_COMMON
   enabled: true
   configuration:
-    domainName: com.saveourtool.sariffixpatches
+    domainName: com.saveourtool.sarifutils
     kotlinVersion: 1.6
     srcDirectories: "main,nativeMain,commonMain,commonNonJsMain"
     testDirs: "test,nativeTest,commonTest,jvmTest,commonNonJsTest"

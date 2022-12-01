@@ -1,7 +1,7 @@
-import com.saveourtool.sariffixpatches.buildutils.configureDiktat
-import com.saveourtool.sariffixpatches.buildutils.configureVersioning
-import com.saveourtool.sariffixpatches.buildutils.createDetektTask
-import com.saveourtool.sariffixpatches.buildutils.installGitHooks
+import com.saveourtool.sarifutils.buildutils.configureDiktat
+import com.saveourtool.sarifutils.buildutils.configureVersioning
+import com.saveourtool.sarifutils.buildutils.createDetektTask
+import com.saveourtool.sarifutils.buildutils.installGitHooks
 
 // version generation
 configureVersioning()

@@ -5,7 +5,7 @@
  * These source sets can be retrieved in a particular build script and configured further as needed.
  */
 
-package com.saveourtool.sariffixpatches.buildutils
+package com.saveourtool.sarifutils.buildutils
 
 import org.gradle.kotlin.dsl.kotlin
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform

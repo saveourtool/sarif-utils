@@ -4,7 +4,7 @@
 
 @file:Suppress("FILE_WILDCARD_IMPORTS")
 
-package com.saveourtool.sariffixpatches.buildutils
+package com.saveourtool.sarifutils.buildutils
 
 import org.gradle.api.Project
 import org.gradle.api.tasks.testing.Test
@@ -47,7 +47,7 @@ fun Project.configureJacoco() {
     }
 
     // `application` plugin creates jacocoTestReport task in plugin section (this is definitely incorrect behavior)
-    // AFTER that in "com.saveourtool.sariffixpatches.buildutils.kotlin-library" we try to register this task once again and fail
+    // AFTER that in "com.saveourtool.sarifutils.buildutils.kotlin-library" we try to register this task once again and fail
     // so the order of plugins in `apply` is critically important
     val jacocoTestReportTask = if (project.name == "core") {
         val jacocoTestReportTask by tasks.named("jacocoTestReport", configure)

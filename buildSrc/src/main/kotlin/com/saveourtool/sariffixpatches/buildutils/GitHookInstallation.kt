@@ -2,7 +2,7 @@
  * Gradle tasks to install git hooks as a part of the build
  */
 
-package com.saveourtool.sariffixpatches.buildutils
+package com.saveourtool.sarifutils.buildutils
 
 import org.gradle.api.Project
 import org.gradle.api.tasks.Copy

@@ -1,4 +1,4 @@
-rootProject.name = "sariffixpatches"
+rootProject.name = "sarifutils"
 
 include("core")
 

@@ -4,11 +4,11 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 
 plugins {
     application
-    id("com.saveourtool.sariffixpatches.buildutils.kotlin-library")
+    id("com.saveourtool.sarifutils.buildutils.kotlin-library")
 }
 
 application {
-    mainClass.set("com.saveourtool.sariffixpatches.cli.MainKt")
+    mainClass.set("com.saveourtool.sarifutils.cli.MainKt")
 }
 
 kotlin {
@@ -46,10 +46,10 @@ fun registerNativeBinaries(os: DefaultOperatingSystem, kotlin: KotlinMultiplatfo
 
     configure(listOf(saveTarget)) {
         binaries {
-            val name = "sariffixpatches-${project.version}-${this@configure.name}"
+            val name = "sarifutils-${project.version}-${this@configure.name}"
             executable {
                 this.baseName = name
-                entryPoint = "com.saveourtool.sariffixpatches.cli.main"
+                entryPoint = "com.saveourtool.sarifutils.cli.main"
             }
         }
     }
