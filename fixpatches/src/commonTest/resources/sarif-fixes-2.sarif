@@ -117,26 +117,7 @@
       "tool": {
         "driver": {
           "name": "semgrep",
-          "rules": [
-            {
-              "defaultConfiguration": {
-                "level": "error"
-              },
-              "fullDescription": {
-                "text": "Use `.get()` method to avoid a KeyNotFound error"
-              },
-              "id": "rules.autofix.use-dict-get",
-              "name": "rules.autofix.use-dict-get",
-              "properties": {
-                "precision": "very-high",
-                "tags": []
-              },
-              "shortDescription": {
-                "text": "Use `.get()` method to avoid a KeyNotFound error"
-              }
-            }
-          ],
-          "semanticVersion": "placeholder"
+          "version": "placeholder"
         }
       }
     }

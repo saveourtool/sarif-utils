@@ -15,7 +15,7 @@
               "artifactChanges": [
                 {
                   "artifactLocation": {
-                    "uri": "src\\kotlin\\EnumValueSnakeCaseTest.kt"
+                    "uri": "src/kotlin/EnumValueSnakeCaseTest.kt"
                   },
                   "replacements": [
                     {
@@ -41,7 +41,7 @@
             {
               "physicalLocation": {
                 "artifactLocation": {
-                  "uri": "src\\kotlin\\EnumValueSnakeCaseTest.kt",
+                  "uri": "src/kotlin/EnumValueSnakeCaseTest.kt",
                   "uriBaseId": "%SRCROOT%"
                 },
                 "region": {

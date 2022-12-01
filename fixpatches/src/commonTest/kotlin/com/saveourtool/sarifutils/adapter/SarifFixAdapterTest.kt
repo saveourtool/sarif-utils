@@ -98,7 +98,7 @@ class SarifFixAdapterTest {
 
     @Test
     fun `sarif fix adapter test`() {
-        val sarifFilePath = "src/commonTest/resources/sarif-fixes.sarif".toPath()
+        val sarifFilePath = "src/commonTest/resources/sarif-warn-and-fixes.sarif".toPath()
         val sarifFixAdapter = SarifFixAdapter(
             sarifFile = sarifFilePath,
             testFiles = emptyList()

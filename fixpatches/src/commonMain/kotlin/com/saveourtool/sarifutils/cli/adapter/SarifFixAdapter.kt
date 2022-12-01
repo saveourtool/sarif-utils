@@ -17,6 +17,7 @@ class SarifFixAdapter(
     private val testFiles: List<Path>
 ) {
     fun process() {
+        // https://youtrack.jetbrains.com/issue/KT-54634/MPP-Test-Failure-causes-KotlinJvmTestExecutorexecute1-does-not-define-failure
         val sarifSchema210 = Json.decodeFromString<SarifSchema210>(
             fs.readFile(sarifFile)
         )
@@ -48,6 +49,7 @@ class SarifFixAdapter(
         }
     }
 
+    // TODO if insertedContent?.text is null -- only delete region
     private fun applyReplacementsToFile(runReplacements: List<RuleReplacements?>?, testFiles: List<Path>) {
         runReplacements?.forEach { ruleReplacements ->
             ruleReplacements?.forEach {
