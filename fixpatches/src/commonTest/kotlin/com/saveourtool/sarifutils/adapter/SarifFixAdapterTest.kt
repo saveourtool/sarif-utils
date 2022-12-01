@@ -1,10 +1,14 @@
-package com.saveourtool.sarifutils
+package com.saveourtool.sarifutils.adapter
 
+import com.saveourtool.sarifutils.cli.files.fs
+import com.saveourtool.sarifutils.cli.files.readFile
 import io.github.detekt.sarif4k.SarifSchema210
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import okio.FileSystem
+import okio.Path.Companion.toPath
 
 class SarifFixAdapterTest {
     @Test
@@ -74,6 +78,23 @@ class SarifFixAdapterTest {
             ?.first()!!
 
         assertEquals(result.message.text, "'x' is assigned a value but never used.")
+        assertEquals(result.locations?.first()?.physicalLocation?.artifactLocation
+            ?.uri, "file:///C:/dev/sarif/sarif-tutorials/samples/Introduction/simple-example.js")
+    }
+
+
+    @Test
+    fun `should read SARIF file`() {
+        val sarifFile = "../resources/sarif-fixes.sarif".toPath()
+        val sarifSchema210 = Json.decodeFromString<SarifSchema210>(
+            fs.readFile(sarifFile)
+        )
+
+        val result = sarifSchema210.runs.first()
+            .results
+            ?.first()!!
+
+        assertEquals(result.message.text, "[ENUM_VALUE] enum values should be in selected UPPER_CASE snake/PascalCase format: NAme_MYa_sayR_")
         assertEquals(result.locations?.first()?.physicalLocation?.artifactLocation
             ?.uri, "file:///C:/dev/sarif/sarif-tutorials/samples/Introduction/simple-example.js")
     }
