@@ -3,18 +3,20 @@ package com.saveourtool.sarifutils.adapter
 import com.saveourtool.sarifutils.cli.adapter.SarifFixAdapter
 import com.saveourtool.sarifutils.cli.files.fs
 import com.saveourtool.sarifutils.cli.files.readFile
+
 import io.github.detekt.sarif4k.SarifSchema210
+import okio.Path.Companion.toPath
+
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import okio.Path.Companion.toPath
 
 // https://youtrack.jetbrains.com/issue/KT-54634/MPP-Test-Failure-causes-KotlinJvmTestExecutorexecute1-does-not-define-failure
 class SarifFixAdapterTest {
     @Test
     @Suppress("TOO_LONG_FUNCTION")
-    fun `simple check - should read SARIF report`() {
+    fun `should read SARIF report`() {
         val sarif = """
             {
               "version": "2.1.0",

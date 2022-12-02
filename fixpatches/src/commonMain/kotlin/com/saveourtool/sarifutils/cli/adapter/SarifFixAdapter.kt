@@ -4,12 +4,14 @@ import com.saveourtool.sarifutils.cli.config.FileReplacements
 import com.saveourtool.sarifutils.cli.config.RuleReplacements
 import com.saveourtool.sarifutils.cli.files.fs
 import com.saveourtool.sarifutils.cli.files.readFile
+
 import io.github.detekt.sarif4k.Run
 import io.github.detekt.sarif4k.SarifSchema210
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
 import okio.Path
 import okio.Path.Companion.toPath
+
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 
 class SarifFixAdapter(
     private val sarifFile: Path,
@@ -31,7 +33,7 @@ class SarifFixAdapter(
         }
     }
 
-    private fun Run.extractFixObject(): List<RuleReplacements?>? {
+    internal fun Run.extractFixObject(): List<RuleReplacements?>? {
         if (!this.isFixObjectExist()) {
             return emptyList()
         }
@@ -52,11 +54,9 @@ class SarifFixAdapter(
         }
     }
 
-    private fun Run.isFixObjectExist(): Boolean {
-        return this.results?.any {
-            it.fixes == null
-        } ?: false
-    }
+    private fun Run.isFixObjectExist(): Boolean = this.results?.any {
+        it.fixes == null
+    } ?: false
 
     // TODO if insertedContent?.text is null -- only delete region
     private fun applyReplacementsToFile(runReplacements: List<RuleReplacements?>?, testFiles: List<Path>) {
