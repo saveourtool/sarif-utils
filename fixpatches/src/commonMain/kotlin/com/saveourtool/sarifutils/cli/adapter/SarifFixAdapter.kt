@@ -23,7 +23,7 @@ class SarifFixAdapter(
         )
         // A run object describes a single run of an analysis tool and contains the output of that run.
         sarifSchema210.runs.forEachIndexed { index, run ->
-            val runReplacements: List<RuleReplacements?>? = run.extractFixObject()
+            val runReplacements: List<RuleReplacements?>? = extractFixObject(run)
             if (runReplacements.isNullOrEmpty()) {
                 // TODO: Use logging library
                 println("Run #$index have no fix object section!")
@@ -33,13 +33,13 @@ class SarifFixAdapter(
         }
     }
 
-    internal fun Run.extractFixObject(): List<RuleReplacements?>? {
-        if (!this.isFixObjectExist()) {
+    fun extractFixObject(run: Run): List<RuleReplacements?>? {
+        if (!run.isFixObjectExist()) {
             return emptyList()
         }
         // A result object describes a single result detected by an analysis tool.
         // Each result is produced by the evaluation of a rule.
-        return this.results?.map { result ->
+        return run.results?.map { result ->
             // A fix object represents a proposed fix for the problem indicated by the result.
             // It specifies a set of artifacts to modify.
             // For each artifact, it specifies regions to remove, and provides new content to insert.
@@ -55,7 +55,7 @@ class SarifFixAdapter(
     }
 
     private fun Run.isFixObjectExist(): Boolean = this.results?.any {
-        it.fixes == null
+        it.fixes != null
     } ?: false
 
     // TODO if insertedContent?.text is null -- only delete region

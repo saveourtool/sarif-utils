@@ -99,8 +99,57 @@ class SarifFixAdapterTest {
     }
 
     @Test
-    fun `sarif fix adapter test`() {
+    fun `should extract SARIF fix objects`() {
+        val sarifFilePath = "src/commonTest/resources/sarif-fixes.sarif".toPath()
+        val sarifFile = fs.readFile(sarifFilePath)
+        val sarifSchema210 = Json.decodeFromString<SarifSchema210>(sarifFile)
+
+        val sarifFixAdapter = SarifFixAdapter(
+            sarifFile = sarifFilePath,
+            testFiles = emptyList()
+        )
+        val results = sarifSchema210.runs.map {
+            sarifFixAdapter.extractFixObject(it)
+        }
+        assertEquals(results.size, 1)
+        val allReplacements = results.first()!!
+        assertEquals(allReplacements.size, 1)
+        val replacement = allReplacements.first()!!
+        assertEquals(replacement.first().filePath, "src/kotlin/EnumValueSnakeCaseTest.kt".toPath())
+        val changes = replacement.first().replacements.first()
+        assertEquals(changes.deletedRegion.startLine, 10)
+        assertEquals(changes.deletedRegion.startColumn, 5)
+        assertEquals(changes.deletedRegion.endLine, 5)
+        assertEquals(changes.deletedRegion.endColumn, 19)
+        assertEquals(changes.insertedContent!!.text, "nameMyaSayR")
+    }
+
+    @Test
+    fun `should extract SARIF fix objects 2`() {
+        val sarifFilePath = "src/commonTest/resources/sarif-fixes-2.sarif".toPath()
+        val sarifFixAdapter = SarifFixAdapter(
+            sarifFile = sarifFilePath,
+            testFiles = emptyList()
+        )
+
+        sarifFixAdapter.process()
+    }
+
+
+    @Test
+    fun `should extract SARIF fix objects 3`() {
         val sarifFilePath = "src/commonTest/resources/sarif-warn-and-fixes.sarif".toPath()
+        val sarifFixAdapter = SarifFixAdapter(
+            sarifFile = sarifFilePath,
+            testFiles = emptyList()
+        )
+
+        sarifFixAdapter.process()
+    }
+
+    @Test
+    fun `sarif fix adapter test`() {
+        val sarifFilePath = "src/commonTest/resources/sarif-fixes.sarif".toPath()
         val sarifFixAdapter = SarifFixAdapter(
             sarifFile = sarifFilePath,
             testFiles = emptyList()
