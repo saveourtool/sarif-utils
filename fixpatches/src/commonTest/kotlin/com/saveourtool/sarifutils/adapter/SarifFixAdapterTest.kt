@@ -8,9 +8,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import okio.FileSystem
 import okio.Path.Companion.toPath
 
+// https://youtrack.jetbrains.com/issue/KT-54634/MPP-Test-Failure-causes-KotlinJvmTestExecutorexecute1-does-not-define-failure
 class SarifFixAdapterTest {
     @Test
     @Suppress("TOO_LONG_FUNCTION")

@@ -4,7 +4,6 @@ import com.saveourtool.sarifutils.cli.config.FileReplacements
 import com.saveourtool.sarifutils.cli.config.RuleReplacements
 import com.saveourtool.sarifutils.cli.files.fs
 import com.saveourtool.sarifutils.cli.files.readFile
-import io.github.detekt.sarif4k.Replacement
 import io.github.detekt.sarif4k.Run
 import io.github.detekt.sarif4k.SarifSchema210
 import kotlinx.serialization.decodeFromString
@@ -17,21 +16,25 @@ class SarifFixAdapter(
     private val testFiles: List<Path>
 ) {
     fun process() {
-        // https://youtrack.jetbrains.com/issue/KT-54634/MPP-Test-Failure-causes-KotlinJvmTestExecutorexecute1-does-not-define-failure
         val sarifSchema210 = Json.decodeFromString<SarifSchema210>(
             fs.readFile(sarifFile)
         )
         // A run object describes a single run of an analysis tool and contains the output of that run.
-        sarifSchema210.runs.forEach {
-            val runReplacements: List<RuleReplacements?>? = it.extractFixObject()
-            applyReplacementsToFile(runReplacements, testFiles)
+        sarifSchema210.runs.forEachIndexed { index, run ->
+            val runReplacements: List<RuleReplacements?>? = run.extractFixObject()
+            if (runReplacements.isNullOrEmpty()) {
+                // TODO: Use logging library
+                println("Run #$index have no fix object section!")
+            } else {
+                applyReplacementsToFile(runReplacements, testFiles)
+            }
         }
     }
 
-    // TODO what with nullability of returning type?
     private fun Run.extractFixObject(): List<RuleReplacements?>? {
-        // TODO Note, all fields could be absent
-        // TODO support multiline fixes. Should we? In microsoft they don't use endLine at all
+        if (!this.isFixObjectExist()) {
+            return emptyList()
+        }
         // A result object describes a single result detected by an analysis tool.
         // Each result is produced by the evaluation of a rule.
         return this.results?.map { result ->
@@ -40,13 +43,19 @@ class SarifFixAdapter(
             // For each artifact, it specifies regions to remove, and provides new content to insert.
             result.fixes?.flatMap { fix ->
                 fix.artifactChanges.map { artifactChange ->
-                    // TODO: What if uri is not provided?
+                    // TODO: What if uri is not provided? Could it be?
                     val filePath = artifactChange.artifactLocation.uri!!.toPath()
                     val replacements = artifactChange.replacements
                     FileReplacements(filePath, replacements)
                 }
             }
         }
+    }
+
+    private fun Run.isFixObjectExist(): Boolean {
+        return this.results?.any {
+            it.fixes == null
+        } ?: false
     }
 
     // TODO if insertedContent?.text is null -- only delete region
