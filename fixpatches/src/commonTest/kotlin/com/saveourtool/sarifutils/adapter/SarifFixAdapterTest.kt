@@ -215,30 +215,41 @@ class SarifFixAdapterTest {
         // Number of runs
         assertEquals(results.size, 1)
 
-        // Number of rules in first run
-        val numberOfRules = results.first()!!
-        assertEquals(numberOfRules.size, 1)
+        // Number of fixes (rules) from first run
+        val numberOfFixesFromFirstRun = results.first()!!
+        assertEquals(numberOfFixesFromFirstRun.size, 1) // that's mean, that it's only one fix
 
-        // List of replacements of first rule for ALL files
-        val firstRuleReplacements = numberOfRules.first()!!
+        // Number of first fix artifact changes (probably for several files)
+        val firstFixArtifactChanges = numberOfFixesFromFirstRun.first()!!
+        assertEquals(firstFixArtifactChanges.size, 2)
 
-        // Number of files, for which first rule have replacements
-        assertEquals(firstRuleReplacements.size, 2)
-//
-//        // List of replacements of first rule for FIRST file
-//        val firstRuleReplacementsForFirstFile = firstRuleReplacements.first()
-//
-//        assertEquals(firstRuleReplacementsForFirstFile.filePath, "targets/autofix/autofix.py".toPath())
-//
-//        // Number of replacements of first rule for first file
-//        assertEquals(firstRuleReplacementsForFirstFile.replacements.size, 1)
-//
-//        val changes = firstRuleReplacementsForFirstFile.replacements.first()
-//        assertEquals(changes.deletedRegion.startLine, 5)
-//        assertEquals(changes.deletedRegion.startColumn, 3)
-//        assertEquals(changes.deletedRegion.endLine, 5)
-//        assertEquals(changes.deletedRegion.endColumn, 12)
-//        assertEquals(changes.insertedContent!!.text, "  inputs.get(x) = 1")
+        val firstArtifactChanges = firstFixArtifactChanges.first()
+
+        assertEquals(firstArtifactChanges.filePath, "NeedsFix.cs".toPath())
+
+        // Number of replacements from first artifact change
+        assertEquals(firstArtifactChanges.replacements.size, 1)
+
+        val changes = firstArtifactChanges.replacements.first()
+        assertEquals(changes.deletedRegion.startLine, 7)
+        assertEquals(changes.deletedRegion.startColumn, 17)
+        assertEquals(changes.deletedRegion.endLine, null)
+        assertEquals(changes.deletedRegion.endColumn, 22)
+        assertEquals(changes.insertedContent!!.text, "word")
+
+        val secondArtifactChanges = firstFixArtifactChanges.last()
+
+        assertEquals(secondArtifactChanges.filePath, "NeedsFix.cs".toPath())
+
+        // Number of replacements from second artifact change
+        assertEquals(secondArtifactChanges.replacements.size, 1)
+
+        val changes2 = secondArtifactChanges.replacements.first()
+        assertEquals(changes2.deletedRegion.startLine, 7)
+        assertEquals(changes2.deletedRegion.startColumn, 17)
+        assertEquals(changes2.deletedRegion.endLine, null)
+        assertEquals(changes2.deletedRegion.endColumn, 23)
+        assertEquals(changes2.insertedContent, null)
     }
 
     @Test
