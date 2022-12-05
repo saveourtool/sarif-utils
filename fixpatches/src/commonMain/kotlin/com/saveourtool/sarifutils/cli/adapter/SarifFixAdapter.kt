@@ -13,12 +13,21 @@ import okio.Path.Companion.toPath
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
+/**
+ * Adapter for applying sarif fix object replacements to the corresponding test files
+ *
+ * @param sarifFile path to the sarif file with fix object replacements
+ * @param testFiles list of the test file, to which above fixes need to be applied
+ */
 class SarifFixAdapter(
     private val sarifFile: Path,
     private val testFiles: List<Path>
 ) {
+    /**
+     * Main entry for processing and applying fixes from sarif file into the test files
+     */
     fun process() {
-        val sarifSchema210 = Json.decodeFromString<SarifSchema210>(
+        val sarifSchema210: SarifSchema210 = Json.decodeFromString(
             fs.readFile(sarifFile)
         )
         // A run object describes a single run of an analysis tool and contains the output of that run.
@@ -33,6 +42,10 @@ class SarifFixAdapter(
         }
     }
 
+    /**
+     * @param run describes a single run of an analysis tool, and contains the reported output of that run
+     * @return list of replacements for all files from single [run]
+     */
     fun extractFixObject(run: Run): List<RuleReplacements?>? {
         if (!run.isFixObjectExist()) {
             return emptyList()
@@ -54,17 +67,19 @@ class SarifFixAdapter(
         }
     }
 
-    private fun Run.isFixObjectExist(): Boolean = this.results?.any {
-        it.fixes != null
+    private fun Run.isFixObjectExist(): Boolean = this.results?.any { result ->
+        result.fixes != null
     } ?: false
 
     // TODO if insertedContent?.text is null -- only delete region
     private fun applyReplacementsToFile(runReplacements: List<RuleReplacements?>?, testFiles: List<Path>) {
         runReplacements?.forEach { ruleReplacements ->
-            ruleReplacements?.forEach {
-                println("\n-------------------Replacement for file ${it.filePath}-------------------------\n")
-                it.replacements.forEach {
-                    println("Start line: ${it.deletedRegion.startLine}, start column ${it.deletedRegion.startColumn}, replacement: ${it.insertedContent?.text}")
+            ruleReplacements?.forEach { fileReplacements ->
+                println("\n-------------------Replacements for file ${fileReplacements.filePath}-------------------------\n")
+                fileReplacements.replacements.forEach { replacement ->
+                    println("Start line: ${replacement.deletedRegion.startLine}," +
+                            "Start column: ${replacement.deletedRegion.startColumn}," +
+                            "Replacement: ${replacement.insertedContent?.text}")
                 }
             }
         }

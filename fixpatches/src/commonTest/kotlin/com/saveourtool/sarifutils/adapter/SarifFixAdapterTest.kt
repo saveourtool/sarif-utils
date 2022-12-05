@@ -13,6 +13,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
 // https://youtrack.jetbrains.com/issue/KT-54634/MPP-Test-Failure-causes-KotlinJvmTestExecutorexecute1-does-not-define-failure
+@Suppress("TOO_LONG_FUNCTION")
 class SarifFixAdapterTest {
     @Test
     @Suppress("TOO_LONG_FUNCTION")
@@ -89,7 +90,7 @@ class SarifFixAdapterTest {
     fun `should read SARIF file`() {
         val sarifFilePath = "src/commonTest/resources/sarif-fixes.sarif".toPath()
         val sarifFile = fs.readFile(sarifFilePath)
-        val sarifSchema210 = Json.decodeFromString<SarifSchema210>(sarifFile)
+        val sarifSchema210: SarifSchema210 = Json.decodeFromString(sarifFile)
 
         val result = sarifSchema210.runs.first()
             .results
@@ -102,7 +103,7 @@ class SarifFixAdapterTest {
     fun `should extract SARIF fix objects`() {
         val sarifFilePath = "src/commonTest/resources/sarif-fixes.sarif".toPath()
         val sarifFile = fs.readFile(sarifFilePath)
-        val sarifSchema210 = Json.decodeFromString<SarifSchema210>(sarifFile)
+        val sarifSchema210: SarifSchema210 = Json.decodeFromString(sarifFile)
 
         val sarifFixAdapter = SarifFixAdapter(
             sarifFile = sarifFilePath,
@@ -116,7 +117,7 @@ class SarifFixAdapterTest {
 
         // Number of fixes (rules) from first run
         val numberOfFixesFromFirstRun = results.first()!!
-        assertEquals(numberOfFixesFromFirstRun.size, 1) // that's mean, that it's only one fix
+        assertEquals(numberOfFixesFromFirstRun.size, 1)  // that's mean, that it's only one fix
 
         // Number of first fix artifact changes (probably for several files)
         val firstFixArtifactChanges = numberOfFixesFromFirstRun.first()!!
@@ -141,7 +142,7 @@ class SarifFixAdapterTest {
     fun `should extract SARIF fix objects 2`() {
         val sarifFilePath = "src/commonTest/resources/sarif-fixes-2.sarif".toPath()
         val sarifFile = fs.readFile(sarifFilePath)
-        val sarifSchema210 = Json.decodeFromString<SarifSchema210>(sarifFile)
+        val sarifSchema210: SarifSchema210 = Json.decodeFromString(sarifFile)
 
         val sarifFixAdapter = SarifFixAdapter(
             sarifFile = sarifFilePath,
@@ -176,7 +177,7 @@ class SarifFixAdapterTest {
         assertEquals(changes.deletedRegion.endColumn, 12)
         assertEquals(changes.insertedContent!!.text, "  inputs.get(x) = 1")
 
-        //===================================================================//
+        // ===================================================================//
 
         // Number of second fix artifact changes (probably for several files)
         val secondFixArtifactChanges = numberOfFixesFromFirstRun.last()!!
@@ -197,12 +198,11 @@ class SarifFixAdapterTest {
         assertEquals(changes2.insertedContent!!.text, "  if inputs.get(x + 1) == True:")
     }
 
-
     @Test
     fun `should extract SARIF fix objects 3`() {
         val sarifFilePath = "src/commonTest/resources/sarif-warn-and-fixes.sarif".toPath()
         val sarifFile = fs.readFile(sarifFilePath)
-        val sarifSchema210 = Json.decodeFromString<SarifSchema210>(sarifFile)
+        val sarifSchema210: SarifSchema210 = Json.decodeFromString(sarifFile)
 
         val sarifFixAdapter = SarifFixAdapter(
             sarifFile = sarifFilePath,
@@ -217,7 +217,7 @@ class SarifFixAdapterTest {
 
         // Number of fixes (rules) from first run
         val numberOfFixesFromFirstRun = results.first()!!
-        assertEquals(numberOfFixesFromFirstRun.size, 1) // that's mean, that it's only one fix
+        assertEquals(numberOfFixesFromFirstRun.size, 1)  // that's mean, that it's only one fix
 
         // Number of first fix artifact changes (probably for several files)
         val firstFixArtifactChanges = numberOfFixesFromFirstRun.first()!!
@@ -254,8 +254,7 @@ class SarifFixAdapterTest {
 
     @Test
     fun `sarif fix adapter test`() {
-        //val sarifFilePath = "src/commonTest/resources/sarif-fixes.sarif".toPath()
-        val sarifFilePath = "src/commonTest/resources/sarif-warn-and-fixes.sarif".toPath()
+        val sarifFilePath = "src/commonTest/resources/sarif-fixes.sarif".toPath()
         val sarifFixAdapter = SarifFixAdapter(
             sarifFile = sarifFilePath,
             testFiles = emptyList()

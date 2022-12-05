@@ -7,7 +7,7 @@ typealias RuleReplacements = List<FileReplacements>
 
 /**
  * @property filePath path to the file
- * @property replacements list of fix replacements for this [file]
+ * @property replacements list of artifact changes for this [file]
  */
 data class FileReplacements(
     val filePath: Path,
