@@ -5,6 +5,6 @@ package com.saveourtool.diktat.test.resources.test.paragraph1.naming.enum_
 // ;warn:9:5: [ENUMS_SEPARATED] enum is incorrectly formatted: enums must end with semicolon{{.*}}
 // ;warn:9:5: [ENUMS_SEPARATED] enum is incorrectly formatted: last enum entry must end with a comma{{.*}}
 enum class EnumValueSnakeCaseTest {
-    // ;warn:10:5: [ENUM_VALUE] enum values should be in selected UPPER_CASE snake/PascalCase format: NAme_MYa_sayR_{{.*}}
+    // ;warn:9:5: [ENUM_VALUE] enum values should be in selected UPPER_CASE snake/PascalCase format: NAme_MYa_sayR_{{.*}}
     NAme_MYa_sayR_
 }

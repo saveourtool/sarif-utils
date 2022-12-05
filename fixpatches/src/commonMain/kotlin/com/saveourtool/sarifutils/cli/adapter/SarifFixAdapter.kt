@@ -4,6 +4,7 @@ import com.saveourtool.sarifutils.cli.config.FileReplacements
 import com.saveourtool.sarifutils.cli.config.RuleReplacements
 import com.saveourtool.sarifutils.cli.files.fs
 import com.saveourtool.sarifutils.cli.files.readFile
+import com.saveourtool.sarifutils.cli.files.readLines
 
 import io.github.detekt.sarif4k.Run
 import io.github.detekt.sarif4k.SarifSchema210
@@ -84,10 +85,20 @@ class SarifFixAdapter(
                     println("Couldn't find appropriate test file for ${fileReplacements.filePath} in Sarif!")
                     return@Loop
                 }
+                val fileContent = fs.readLines(testFile)
+
                 fileReplacements.replacements.forEach { replacement ->
-                    println("Start line: ${replacement.deletedRegion.startLine}," +
-                            "Start column: ${replacement.deletedRegion.startColumn}," +
-                            "Replacement: ${replacement.insertedContent?.text}")
+                    // TODO: LONG TO INT?
+                    val startLine = replacement.deletedRegion.startLine
+                    val startColumn = replacement.deletedRegion.startColumn
+                    val endColumn = replacement.deletedRegion.endColumn
+                    val insertedContent = replacement.insertedContent?.text
+                    println("Start line: ${startLine}," +
+                            "Start column: ${startColumn}," +
+                            "Replacement: ${insertedContent}")
+
+                    val fileLine = fileContent[startLine!!.toInt() - 1]
+                    println("Content from file: ${fileLine} ${fileLine.substring(startColumn!!.toInt() - 1, endColumn!!.toInt() - 1)}")
                 }
             }
         }
