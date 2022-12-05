@@ -72,6 +72,7 @@ class SarifFixAdapter(
     } ?: false
 
     // TODO if insertedContent?.text is null -- only delete region
+    @Suppress("UnusedPrivateMember")
     private fun applyReplacementsToFile(runReplacements: List<RuleReplacements?>?, testFiles: List<Path>) {
         runReplacements?.forEach { ruleReplacements ->
             ruleReplacements?.forEach { fileReplacements ->
