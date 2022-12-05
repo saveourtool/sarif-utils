@@ -1,8 +1,12 @@
 package com.saveourtool.sarifutils.adapter
 
 import com.saveourtool.sarifutils.cli.adapter.SarifFixAdapter
+import com.saveourtool.sarifutils.cli.files.copyFileContent
+import com.saveourtool.sarifutils.cli.files.createFile
+import com.saveourtool.sarifutils.cli.files.createTempDir
 import com.saveourtool.sarifutils.cli.files.fs
 import com.saveourtool.sarifutils.cli.files.readFile
+import com.saveourtool.sarifutils.cli.files.readLines
 
 import io.github.detekt.sarif4k.SarifSchema210
 import okio.Path.Companion.toPath
@@ -11,10 +15,13 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlin.test.AfterTest
 
 // https://youtrack.jetbrains.com/issue/KT-54634/MPP-Test-Failure-causes-KotlinJvmTestExecutorexecute1-does-not-define-failure
 @Suppress("TOO_LONG_FUNCTION")
 class SarifFixAdapterTest {
+    private val tmpDir = fs.createTempDir(SarifFixAdapterTest::class.simpleName!!)
+
     @Test
     @Suppress("TOO_LONG_FUNCTION")
     fun `should read SARIF report`() {
@@ -255,11 +262,27 @@ class SarifFixAdapterTest {
     @Test
     fun `sarif fix adapter test`() {
         val sarifFilePath = "src/commonTest/resources/sarif-fixes.sarif".toPath()
+        val testFile = "src/commonTest/resources/src/kotlin/EnumValueSnakeCaseTest.kt".toPath()
+
+        val testFileCopy = fs.createFile(tmpDir / "CopyEnumValueSnakeCaseTest.kt")
+        fs.copyFileContent(testFile, testFileCopy)
+
+        val res = fs.readLines(testFileCopy)
+
+
+        println(res)
+        return
+
         val sarifFixAdapter = SarifFixAdapter(
             sarifFile = sarifFilePath,
-            testFiles = emptyList()
+            testFiles = listOf(testFileCopy)
         )
 
         sarifFixAdapter.process()
+    }
+
+    @AfterTest
+    fun tearDown() {
+        fs.deleteRecursively(tmpDir)
     }
 }
