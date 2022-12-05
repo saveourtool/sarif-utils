@@ -264,18 +264,9 @@ class SarifFixAdapterTest {
         val sarifFilePath = "src/commonTest/resources/sarif-fixes.sarif".toPath()
         val testFile = "src/commonTest/resources/src/kotlin/EnumValueSnakeCaseTest.kt".toPath()
 
-        val testFileCopy = fs.createFile(tmpDir / "CopyEnumValueSnakeCaseTest.kt")
-        fs.copyFileContent(testFile, testFileCopy)
-
-        val res = fs.readLines(testFileCopy)
-
-
-        println(res)
-        return
-
         val sarifFixAdapter = SarifFixAdapter(
             sarifFile = sarifFilePath,
-            testFiles = listOf(testFileCopy)
+            testFiles = listOf(testFile)
         )
 
         sarifFixAdapter.process()

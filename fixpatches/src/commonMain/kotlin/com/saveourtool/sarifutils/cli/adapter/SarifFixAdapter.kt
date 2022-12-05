@@ -75,8 +75,15 @@ class SarifFixAdapter(
     @Suppress("UnusedPrivateMember")
     private fun applyReplacementsToFile(runReplacements: List<RuleReplacements?>?, testFiles: List<Path>) {
         runReplacements?.forEach { ruleReplacements ->
-            ruleReplacements?.forEach { fileReplacements ->
+            ruleReplacements?.forEach Loop@ { fileReplacements ->
                 println("\n-------------------Replacements for file ${fileReplacements.filePath}-------------------------\n")
+                val testFile = testFiles.find {
+                    it.toString().contains(fileReplacements.filePath.toString())
+                }
+                if (testFile == null) {
+                    println("Couldn't find appropriate test file for ${fileReplacements.filePath} in Sarif!")
+                    return@Loop
+                }
                 fileReplacements.replacements.forEach { replacement ->
                     println("Start line: ${replacement.deletedRegion.startLine}," +
                             "Start column: ${replacement.deletedRegion.startColumn}," +
