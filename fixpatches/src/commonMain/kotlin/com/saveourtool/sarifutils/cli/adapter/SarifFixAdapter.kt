@@ -81,7 +81,6 @@ class SarifFixAdapter(
         result.fixes != null
     } ?: false
 
-    @Suppress("UnusedPrivateMember")
     private fun applyReplacementsToFiles(runReplacements: List<RuleReplacements?>?, testFiles: List<Path>): List<Path?> = runReplacements?.flatMap { ruleReplacements ->
         ruleReplacements?.mapNotNull { fileReplacements ->
             val testFile = testFiles.find {
@@ -118,6 +117,11 @@ class SarifFixAdapter(
                 write((it + "\n").encodeToByteArray())
             }
         }
+        val res = fs.readLines(testFileCopy)
+        res.forEach {
+            println(it)
+        }
+
         return testFileCopy
     }
 }

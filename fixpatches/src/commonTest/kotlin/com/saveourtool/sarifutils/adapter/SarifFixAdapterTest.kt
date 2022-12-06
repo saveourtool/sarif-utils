@@ -297,6 +297,36 @@ class SarifFixAdapterTest {
         assertEquals(result.trimIndent(), expectedDelta)
     }
 
+    @Test
+    fun `sarif fix adapter test 2`() {
+        val sarifFilePath = "src/commonTest/resources/sarif-fixes-2.sarif".toPath()
+        val testFile = "src/commonTest/resources/targets/autofix/autofix.py".toPath()
+
+        val sarifFixAdapter = SarifFixAdapter(
+            sarifFile = sarifFilePath,
+            testFiles = listOf(testFile)
+        )
+
+        val processedFile = sarifFixAdapter.process().first()!!
+
+        val result = diff(fs.readLines(testFile), fs.readLines(processedFile)).let { patch ->
+            if (patch.deltas.isEmpty()) {
+                ""
+            } else {
+                patch.formatToString()
+            }
+        }
+        println(result)
+        val expectedDelta =
+            """
+                    ChangeDelta, position 8, lines:
+                    -    [NA]me[_]M[Y]a[_s]ayR[_]
+                    +    <na>meM<y>a<S>ayR
+                """.trimIndent()
+
+        //assertEquals(result.trimIndent(), expectedDelta)
+    }
+
     private fun Patch<String>.formatToString() = deltas.joinToString("\n") { delta ->
         when (delta) {
             is ChangeDelta -> diffGenerator
