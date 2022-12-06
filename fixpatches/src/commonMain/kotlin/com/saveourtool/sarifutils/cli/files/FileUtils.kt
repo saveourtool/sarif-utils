@@ -44,7 +44,7 @@ fun FileSystem.createFile(path: Path): Path {
  * @param prefix will be prepended to directory name
  * @return a [Path] representing the created directory
  */
-fun FileSystem.createTempDir(prefix: String = "save-tmp"): Path {
+fun FileSystem.createTempDir(prefix: String = "sarifutils-tmp"): Path {
     val dirName = "$prefix-${Random.nextInt()}"
     return (FileSystem.SYSTEM_TEMPORARY_DIRECTORY / dirName).also {
         createDirectory(it)
