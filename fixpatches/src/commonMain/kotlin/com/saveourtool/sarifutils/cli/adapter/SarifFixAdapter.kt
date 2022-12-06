@@ -2,8 +2,12 @@ package com.saveourtool.sarifutils.cli.adapter
 
 import com.saveourtool.sarifutils.cli.config.FileReplacements
 import com.saveourtool.sarifutils.cli.config.RuleReplacements
+import com.saveourtool.sarifutils.cli.files.copyFileContent
+import com.saveourtool.sarifutils.cli.files.createTempDir
 import com.saveourtool.sarifutils.cli.files.fs
 import com.saveourtool.sarifutils.cli.files.readFile
+import com.saveourtool.sarifutils.cli.files.readLines
+import io.github.detekt.sarif4k.Replacement
 
 import io.github.detekt.sarif4k.Run
 import io.github.detekt.sarif4k.SarifSchema210
@@ -23,30 +27,36 @@ class SarifFixAdapter(
     private val sarifFile: Path,
     private val testFiles: List<Path>
 ) {
+    private val tmpDir = fs.createTempDir(SarifFixAdapter::class.simpleName!!)
+
     /**
      * Main entry for processing and applying fixes from sarif file into the test files
+     *
+     * @return list of processed files
      */
-    fun process() {
+    fun process(): List<Path?> {
         val sarifSchema210: SarifSchema210 = Json.decodeFromString(
             fs.readFile(sarifFile)
         )
         // A run object describes a single run of an analysis tool and contains the output of that run.
-        sarifSchema210.runs.forEachIndexed { index, run ->
-            val runReplacements: List<RuleReplacements?>? = extractFixObject(run)
-            if (runReplacements.isNullOrEmpty()) {
+        val processedFiles = sarifSchema210.runs.flatMapIndexed { index, run ->
+            val runReplacements: List<RuleReplacements?> = extractFixObjects(run)
+            if (runReplacements.isEmpty()) {
                 // TODO: Use logging library
                 println("Run #$index have no fix object section!")
+                emptyList()
             } else {
-                applyReplacementsToFile(runReplacements, testFiles)
+                applyReplacementsToFiles(runReplacements, testFiles)
             }
         }
+        return processedFiles
     }
 
     /**
      * @param run describes a single run of an analysis tool, and contains the reported output of that run
      * @return list of replacements for all files from single [run]
      */
-    fun extractFixObject(run: Run): List<RuleReplacements?>? {
+    fun extractFixObjects(run: Run): List<RuleReplacements?> {
         if (!run.isFixObjectExist()) {
             return emptyList()
         }
@@ -63,26 +73,51 @@ class SarifFixAdapter(
                     val replacements = artifactChange.replacements
                     FileReplacements(filePath, replacements)
                 }
-            }
-        }
+            } ?: emptyList()
+        } ?: emptyList()
     }
 
     private fun Run.isFixObjectExist(): Boolean = this.results?.any { result ->
         result.fixes != null
     } ?: false
 
-    // TODO if insertedContent?.text is null -- only delete region
     @Suppress("UnusedPrivateMember")
-    private fun applyReplacementsToFile(runReplacements: List<RuleReplacements?>?, testFiles: List<Path>) {
-        runReplacements?.forEach { ruleReplacements ->
-            ruleReplacements?.forEach { fileReplacements ->
-                println("\n-------------------Replacements for file ${fileReplacements.filePath}-------------------------\n")
-                fileReplacements.replacements.forEach { replacement ->
-                    println("Start line: ${replacement.deletedRegion.startLine}," +
-                            "Start column: ${replacement.deletedRegion.startColumn}," +
-                            "Replacement: ${replacement.insertedContent?.text}")
-                }
+    private fun applyReplacementsToFiles(runReplacements: List<RuleReplacements?>?, testFiles: List<Path>): List<Path?> = runReplacements?.flatMap { ruleReplacements ->
+        ruleReplacements?.mapNotNull { fileReplacements ->
+            val testFile = testFiles.find {
+                it.toString().contains(fileReplacements.filePath.toString())
+            }
+            if (testFile == null) {
+                println("Couldn't find appropriate test file on the path ${fileReplacements.filePath}, which provided in Sarif!")
+                null
+            } else {
+                applyChangesToFile(testFile, fileReplacements.replacements)
+            }
+        } ?: emptyList()
+    } ?: emptyList()
+
+    private fun applyChangesToFile(testFile: Path, replacements: List<Replacement>): Path {
+        val testFileCopy = tmpDir.resolve(testFile.name)
+        fs.copyFileContent(testFile, testFileCopy)
+        val fileContent = fs.readLines(testFileCopy).toMutableList()
+
+        replacements.forEach { replacement ->
+            val startLine = replacement.deletedRegion.startLine!!.toInt() - 1
+            val startColumn = replacement.deletedRegion.startColumn!!.toInt() - 1
+            val endColumn = replacement.deletedRegion.endColumn!!.toInt() - 1
+            val insertedContent = replacement.insertedContent?.text
+
+            insertedContent?.let {
+                fileContent[startLine] = fileContent[startLine].replaceRange(startColumn, endColumn, it)
+            } ?: run {
+                fileContent[startLine] = fileContent[startLine].removeRange(startColumn, endColumn)
             }
         }
+        fs.write(testFileCopy) {
+            fileContent.forEach {
+                write((it + "\n").encodeToByteArray())
+            }
+        }
+        return testFileCopy
     }
 }

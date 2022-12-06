@@ -24,6 +24,7 @@ kotlin {
                 api(libs.okio)
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.sarif4k)
+                implementation(libs.multiplatform.diff)
             }
         }
     }

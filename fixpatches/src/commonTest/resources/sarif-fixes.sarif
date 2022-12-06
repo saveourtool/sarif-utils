@@ -21,9 +21,9 @@
                     {
                       "deletedRegion": {
                         "endColumn": 19,
-                        "endLine": 10,
+                        "endLine": 9,
                         "startColumn": 5,
-                        "startLine": 10
+                        "startLine": 9
                       },
                       "insertedContent": {
                         "text": "nameMyaSayR"
@@ -46,12 +46,12 @@
                 },
                 "region": {
                   "endColumn": 19,
-                  "endLine": 5,
+                  "endLine": 9,
                   "snippet": {
                     "text": "NAme_MYa_sayR_"
                   },
                   "startColumn": 5,
-                  "startLine": 10
+                  "startLine": 9
                 }
               }
             }
