@@ -4,8 +4,13 @@ import com.saveourtool.sarifutils.cli.adapter.SarifFixAdapter
 import com.saveourtool.sarifutils.cli.files.createTempDir
 import com.saveourtool.sarifutils.cli.files.fs
 import com.saveourtool.sarifutils.cli.files.readFile
+import com.saveourtool.sarifutils.cli.files.readLines
 
 import io.github.detekt.sarif4k.SarifSchema210
+import io.github.petertrr.diffutils.diff
+import io.github.petertrr.diffutils.patch.ChangeDelta
+import io.github.petertrr.diffutils.patch.Patch
+import io.github.petertrr.diffutils.text.DiffRowGenerator
 import okio.Path.Companion.toPath
 
 import kotlin.test.Test
@@ -18,6 +23,14 @@ import kotlin.test.AfterTest
 @Suppress("TOO_LONG_FUNCTION")
 class SarifFixAdapterTest {
     private val tmpDir = fs.createTempDir(SarifFixAdapterTest::class.simpleName!!)
+
+    private val diffGenerator = DiffRowGenerator(
+        showInlineDiffs = true,
+        mergeOriginalRevised = false,
+        inlineDiffByWord = false,
+        oldTag = { _, start -> if (start) "[" else "]" },
+        newTag = { _, start -> if (start) "<" else ">" },
+    )
 
     @Test
     @Suppress("TOO_LONG_FUNCTION")
@@ -120,7 +133,7 @@ class SarifFixAdapterTest {
         assertEquals(results.size, 1)
 
         // Number of fixes (rules) from first run
-        val numberOfFixesFromFirstRun = results.first()!!
+        val numberOfFixesFromFirstRun = results.first()
         assertEquals(numberOfFixesFromFirstRun.size, 1)  // that's mean, that it's only one fix
 
         // Number of first fix artifact changes (probably for several files)
@@ -135,9 +148,9 @@ class SarifFixAdapterTest {
         assertEquals(firstArtifactChanges.replacements.size, 1)
 
         val changes = firstArtifactChanges.replacements.first()
-        assertEquals(changes.deletedRegion.startLine, 10)
+        assertEquals(changes.deletedRegion.startLine, 9)
         assertEquals(changes.deletedRegion.startColumn, 5)
-        assertEquals(changes.deletedRegion.endLine, 10)
+        assertEquals(changes.deletedRegion.endLine, 9)
         assertEquals(changes.deletedRegion.endColumn, 19)
         assertEquals(changes.insertedContent!!.text, "nameMyaSayR")
     }
@@ -160,7 +173,7 @@ class SarifFixAdapterTest {
         assertEquals(results.size, 1)
 
         // Number of fixes (rules) from first run
-        val numberOfFixesFromFirstRun = results.first()!!
+        val numberOfFixesFromFirstRun = results.first()
         assertEquals(numberOfFixesFromFirstRun.size, 2)
 
         // Number of first fix artifact changes (probably for several files)
@@ -220,7 +233,7 @@ class SarifFixAdapterTest {
         assertEquals(results.size, 1)
 
         // Number of fixes (rules) from first run
-        val numberOfFixesFromFirstRun = results.first()!!
+        val numberOfFixesFromFirstRun = results.first()
         assertEquals(numberOfFixesFromFirstRun.size, 1)  // that's mean, that it's only one fix
 
         // Number of first fix artifact changes (probably for several files)
@@ -266,8 +279,39 @@ class SarifFixAdapterTest {
             testFiles = listOf(testFile)
         )
 
-        sarifFixAdapter.process()
+        val processedFile = sarifFixAdapter.process().first()!!
+
+
+        val result = diff(fs.readLines(testFile), fs.readLines(processedFile)).let { patch ->
+            if (patch.deltas.isEmpty()) {
+                ""
+            } else {
+                patch.formatToString()
+            }
+        }
+        val expectedDelta =
+                  """
+                  ChangeDelta, position 8, lines:
+                  -    [NA]me[_]M[Y]a[_s]ayR[_]
+                  +    <na>meM<y>a<S>ayR
+                  """.trimIndent()
+
+        assertEquals(result.trimIndent(), expectedDelta)
     }
+
+    private fun Patch<String>.formatToString() = deltas.joinToString("\n") { delta ->
+        when (delta) {
+            is ChangeDelta -> diffGenerator
+                .generateDiffRows(delta.source.lines, delta.target.lines)
+                .joinToString(prefix = "ChangeDelta, position ${delta.source.position}, lines:\n", separator = "\n\n") {
+                    """-${it.oldLine}
+                      |+${it.newLine}
+                      |""".trimMargin()
+                }
+            else -> delta.toString()
+        }
+    }
+
 
     @AfterTest
     fun tearDown() {
