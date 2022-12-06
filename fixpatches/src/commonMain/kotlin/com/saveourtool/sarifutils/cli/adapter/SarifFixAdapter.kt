@@ -97,7 +97,11 @@ class SarifFixAdapter(
 
     private fun applyChangesToFile(testFile: Path, replacements: List<Replacement>): Path {
         val testFileCopy = tmpDir.resolve(testFile.name)
-        fs.copyFileContent(testFile, testFileCopy)
+        println("FILE EXIST? ${fs.exists(testFileCopy)}")
+        // TODO what if file exist from some previous run?
+        if (!fs.exists(testFileCopy)) {
+            fs.copyFileContent(testFile, testFileCopy)
+        }
         val fileContent = fs.readLines(testFileCopy).toMutableList()
 
         replacements.forEach { replacement ->
@@ -112,6 +116,7 @@ class SarifFixAdapter(
                 fileContent[startLine] = fileContent[startLine].removeRange(startColumn, endColumn)
             }
         }
+        // TODO need to overwrite
         fs.write(testFileCopy) {
             fileContent.forEach {
                 write((it + "\n").encodeToByteArray())
