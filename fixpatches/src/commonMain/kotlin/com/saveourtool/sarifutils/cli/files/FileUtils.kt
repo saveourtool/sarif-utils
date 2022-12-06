@@ -10,7 +10,6 @@ import kotlin.random.Random
 
 expect val fs: FileSystem
 
-
 /**
  * @param path a path to a file
  * @return list of strings from the file
@@ -56,8 +55,13 @@ fun FileSystem.createTempDir(prefix: String = "sarifutils-tmp"): Path {
  *
  * @param [from] path to the file, from which content need to be copied
  * @param [into] path to the file, into which content need to be copied
+ * @param mustCreate whether to create file on [into] path
  */
-fun FileSystem.copyFileContent(from: Path, into: Path, mustCreate: Boolean = false) {
+fun FileSystem.copyFileContent(
+    from: Path,
+    into: Path,
+    mustCreate: Boolean = false
+) {
     fs.write(into, mustCreate) {
         fs.readLines(from).forEach {
             write(

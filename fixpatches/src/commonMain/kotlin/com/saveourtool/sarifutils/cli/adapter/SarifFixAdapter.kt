@@ -31,6 +31,8 @@ class SarifFixAdapter(
 
     /**
      * Main entry for processing and applying fixes from sarif file into the test files
+     *
+     * @return list of processed files
      */
     fun process(): List<Path?> {
         val sarifSchema210: SarifSchema210 = Json.decodeFromString(
@@ -80,21 +82,19 @@ class SarifFixAdapter(
     } ?: false
 
     @Suppress("UnusedPrivateMember")
-    private fun applyReplacementsToFiles(runReplacements: List<RuleReplacements?>?, testFiles: List<Path>): List<Path?> {
-        return runReplacements?.flatMap { ruleReplacements ->
-            ruleReplacements?.mapNotNull { fileReplacements ->
-                val testFile = testFiles.find {
-                    it.toString().contains(fileReplacements.filePath.toString())
-                }
-                if (testFile == null) {
-                    println("Couldn't find appropriate test file on the path ${fileReplacements.filePath}, which provided in Sarif!")
-                    null
-                } else {
-                    applyChangesToFile(testFile, fileReplacements.replacements)
-                }
-            } ?: emptyList()
+    private fun applyReplacementsToFiles(runReplacements: List<RuleReplacements?>?, testFiles: List<Path>): List<Path?> = runReplacements?.flatMap { ruleReplacements ->
+        ruleReplacements?.mapNotNull { fileReplacements ->
+            val testFile = testFiles.find {
+                it.toString().contains(fileReplacements.filePath.toString())
+            }
+            if (testFile == null) {
+                println("Couldn't find appropriate test file on the path ${fileReplacements.filePath}, which provided in Sarif!")
+                null
+            } else {
+                applyChangesToFile(testFile, fileReplacements.replacements)
+            }
         } ?: emptyList()
-    }
+    } ?: emptyList()
 
     private fun applyChangesToFile(testFile: Path, replacements: List<Replacement>): Path {
         val testFileCopy = tmpDir.resolve(testFile.name)

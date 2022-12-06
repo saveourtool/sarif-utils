@@ -13,17 +13,16 @@ import io.github.petertrr.diffutils.patch.Patch
 import io.github.petertrr.diffutils.text.DiffRowGenerator
 import okio.Path.Companion.toPath
 
+import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlin.test.AfterTest
 
 // https://youtrack.jetbrains.com/issue/KT-54634/MPP-Test-Failure-causes-KotlinJvmTestExecutorexecute1-does-not-define-failure
 @Suppress("TOO_LONG_FUNCTION")
 class SarifFixAdapterTest {
     private val tmpDir = fs.createTempDir(SarifFixAdapterTest::class.simpleName!!)
-
     private val diffGenerator = DiffRowGenerator(
         showInlineDiffs = true,
         mergeOriginalRevised = false,
@@ -281,7 +280,6 @@ class SarifFixAdapterTest {
 
         val processedFile = sarifFixAdapter.process().first()!!
 
-
         val result = diff(fs.readLines(testFile), fs.readLines(processedFile)).let { patch ->
             if (patch.deltas.isEmpty()) {
                 ""
@@ -290,11 +288,11 @@ class SarifFixAdapterTest {
             }
         }
         val expectedDelta =
-                  """
-                  ChangeDelta, position 8, lines:
-                  -    [NA]me[_]M[Y]a[_s]ayR[_]
-                  +    <na>meM<y>a<S>ayR
-                  """.trimIndent()
+                """
+                    ChangeDelta, position 8, lines:
+                    -    [NA]me[_]M[Y]a[_s]ayR[_]
+                    +    <na>meM<y>a<S>ayR
+                """.trimIndent()
 
         assertEquals(result.trimIndent(), expectedDelta)
     }
@@ -311,7 +309,6 @@ class SarifFixAdapterTest {
             else -> delta.toString()
         }
     }
-
 
     @AfterTest
     fun tearDown() {
