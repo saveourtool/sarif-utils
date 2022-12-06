@@ -27,32 +27,34 @@ class SarifFixAdapter(
     private val sarifFile: Path,
     private val testFiles: List<Path>
 ) {
-    val tmpDir = fs.createTempDir(SarifFixAdapter::class.simpleName!!)
+    private val tmpDir = fs.createTempDir(SarifFixAdapter::class.simpleName!!)
 
     /**
      * Main entry for processing and applying fixes from sarif file into the test files
      */
-    fun process() {
+    fun process(): List<Path?> {
         val sarifSchema210: SarifSchema210 = Json.decodeFromString(
             fs.readFile(sarifFile)
         )
         // A run object describes a single run of an analysis tool and contains the output of that run.
-        sarifSchema210.runs.forEachIndexed { index, run ->
-            val runReplacements: List<RuleReplacements?>? = extractFixObject(run)
-            if (runReplacements.isNullOrEmpty()) {
+        val processedFiles = sarifSchema210.runs.flatMapIndexed { index, run ->
+            val runReplacements: List<RuleReplacements?> = extractFixObjects(run)
+            if (runReplacements.isEmpty()) {
                 // TODO: Use logging library
                 println("Run #$index have no fix object section!")
+                emptyList()
             } else {
-                applyReplacementsToFile(runReplacements, testFiles)
+                applyReplacementsToFiles(runReplacements, testFiles)
             }
         }
+        return processedFiles
     }
 
     /**
      * @param run describes a single run of an analysis tool, and contains the reported output of that run
      * @return list of replacements for all files from single [run]
      */
-    fun extractFixObject(run: Run): List<RuleReplacements?>? {
+    fun extractFixObjects(run: Run): List<RuleReplacements?> {
         if (!run.isFixObjectExist()) {
             return emptyList()
         }
@@ -69,8 +71,8 @@ class SarifFixAdapter(
                     val replacements = artifactChange.replacements
                     FileReplacements(filePath, replacements)
                 }
-            }
-        }
+            } ?: emptyList()
+        } ?: emptyList()
     }
 
     private fun Run.isFixObjectExist(): Boolean = this.results?.any { result ->
@@ -78,19 +80,20 @@ class SarifFixAdapter(
     } ?: false
 
     @Suppress("UnusedPrivateMember")
-    private fun applyReplacementsToFile(runReplacements: List<RuleReplacements?>?, testFiles: List<Path>) {
-        runReplacements?.forEach { ruleReplacements ->
-            ruleReplacements?.forEach Loop@ { fileReplacements ->
+    private fun applyReplacementsToFiles(runReplacements: List<RuleReplacements?>?, testFiles: List<Path>): List<Path?> {
+        return runReplacements?.flatMap { ruleReplacements ->
+            ruleReplacements?.mapNotNull { fileReplacements ->
                 val testFile = testFiles.find {
                     it.toString().contains(fileReplacements.filePath.toString())
                 }
                 if (testFile == null) {
                     println("Couldn't find appropriate test file on the path ${fileReplacements.filePath}, which provided in Sarif!")
-                    return@Loop
+                    null
+                } else {
+                    applyChangesToFile(testFile, fileReplacements.replacements)
                 }
-                applyChangesToFile(testFile, fileReplacements.replacements)
-            }
-        }
+            } ?: emptyList()
+        } ?: emptyList()
     }
 
     private fun applyChangesToFile(testFile: Path, replacements: List<Replacement>): Path {

@@ -1,12 +1,9 @@
 package com.saveourtool.sarifutils.adapter
 
 import com.saveourtool.sarifutils.cli.adapter.SarifFixAdapter
-import com.saveourtool.sarifutils.cli.files.copyFileContent
-import com.saveourtool.sarifutils.cli.files.createFile
 import com.saveourtool.sarifutils.cli.files.createTempDir
 import com.saveourtool.sarifutils.cli.files.fs
 import com.saveourtool.sarifutils.cli.files.readFile
-import com.saveourtool.sarifutils.cli.files.readLines
 
 import io.github.detekt.sarif4k.SarifSchema210
 import okio.Path.Companion.toPath
@@ -117,7 +114,7 @@ class SarifFixAdapterTest {
             testFiles = emptyList()
         )
         val results = sarifSchema210.runs.map {
-            sarifFixAdapter.extractFixObject(it)
+            sarifFixAdapter.extractFixObjects(it)
         }
         // Number of runs
         assertEquals(results.size, 1)
@@ -156,7 +153,7 @@ class SarifFixAdapterTest {
             testFiles = emptyList()
         )
         val results = sarifSchema210.runs.map {
-            sarifFixAdapter.extractFixObject(it)
+            sarifFixAdapter.extractFixObjects(it)
         }
 
         // Number of runs
@@ -216,7 +213,7 @@ class SarifFixAdapterTest {
             testFiles = emptyList()
         )
         val results = sarifSchema210.runs.map {
-            sarifFixAdapter.extractFixObject(it)
+            sarifFixAdapter.extractFixObjects(it)
         }
 
         // Number of runs
