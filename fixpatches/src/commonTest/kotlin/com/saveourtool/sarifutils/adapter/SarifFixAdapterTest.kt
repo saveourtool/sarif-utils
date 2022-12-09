@@ -190,7 +190,7 @@ class SarifFixAdapterTest {
         assertEquals(changes.deletedRegion.startLine, 5)
         assertEquals(changes.deletedRegion.startColumn, 3)
         assertEquals(changes.deletedRegion.endLine, 5)
-        assertEquals(changes.deletedRegion.endColumn, 12)
+        assertEquals(changes.deletedRegion.endColumn, 16)
         assertEquals(changes.insertedContent!!.text, "  inputs.get(x) = 1")
 
         // ===================================================================//
@@ -208,9 +208,9 @@ class SarifFixAdapterTest {
 
         val changes2 = firstArtifactChangesForSecondFix.replacements.first()
         assertEquals(changes2.deletedRegion.startLine, 6)
-        assertEquals(changes2.deletedRegion.startColumn, 6)
+        assertEquals(changes2.deletedRegion.startColumn, 3)
         assertEquals(changes2.deletedRegion.endLine, 6)
-        assertEquals(changes2.deletedRegion.endColumn, 19)
+        assertEquals(changes2.deletedRegion.endColumn, 28)
         assertEquals(changes2.insertedContent!!.text, "  if inputs.get(x + 1) == True:")
     }
 
