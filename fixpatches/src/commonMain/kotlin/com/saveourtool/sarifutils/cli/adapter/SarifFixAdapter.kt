@@ -81,7 +81,6 @@ class SarifFixAdapter(
         result.fixes != null
     } ?: false
 
-    @Suppress("UnusedPrivateMember")
     private fun applyReplacementsToFiles(runReplacements: List<RuleReplacements?>?, testFiles: List<Path>): List<Path?> = runReplacements?.flatMap { ruleReplacements ->
         ruleReplacements?.mapNotNull { fileReplacements ->
             val testFile = testFiles.find {
@@ -98,7 +97,12 @@ class SarifFixAdapter(
 
     private fun applyChangesToFile(testFile: Path, replacements: List<Replacement>): Path {
         val testFileCopy = tmpDir.resolve(testFile.name)
-        fs.copyFileContent(testFile, testFileCopy)
+        // If file doesn't exist, fill with original data
+        // Otherwise, that's mean, that we already made some changes to it (by other rules),
+        // so continue to work with modified file
+        if (!fs.exists(testFileCopy)) {
+            fs.copyFileContent(testFile, testFileCopy)
+        }
         val fileContent = fs.readLines(testFileCopy).toMutableList()
 
         replacements.forEach { replacement ->
@@ -118,6 +122,7 @@ class SarifFixAdapter(
                 write((it + "\n").encodeToByteArray())
             }
         }
+
         return testFileCopy
     }
 }

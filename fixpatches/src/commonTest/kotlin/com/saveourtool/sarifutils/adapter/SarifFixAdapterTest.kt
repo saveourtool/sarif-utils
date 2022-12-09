@@ -190,7 +190,7 @@ class SarifFixAdapterTest {
         assertEquals(changes.deletedRegion.startLine, 5)
         assertEquals(changes.deletedRegion.startColumn, 3)
         assertEquals(changes.deletedRegion.endLine, 5)
-        assertEquals(changes.deletedRegion.endColumn, 12)
+        assertEquals(changes.deletedRegion.endColumn, 16)
         assertEquals(changes.insertedContent!!.text, "  inputs.get(x) = 1")
 
         // ===================================================================//
@@ -208,9 +208,9 @@ class SarifFixAdapterTest {
 
         val changes2 = firstArtifactChangesForSecondFix.replacements.first()
         assertEquals(changes2.deletedRegion.startLine, 6)
-        assertEquals(changes2.deletedRegion.startColumn, 6)
+        assertEquals(changes2.deletedRegion.startColumn, 3)
         assertEquals(changes2.deletedRegion.endLine, 6)
-        assertEquals(changes2.deletedRegion.endColumn, 19)
+        assertEquals(changes2.deletedRegion.endColumn, 28)
         assertEquals(changes2.insertedContent!!.text, "  if inputs.get(x + 1) == True:")
     }
 
@@ -292,6 +292,40 @@ class SarifFixAdapterTest {
                     ChangeDelta, position 8, lines:
                     -    [NA]me[_]M[Y]a[_s]ayR[_]
                     +    <na>meM<y>a<S>ayR
+                """.trimIndent()
+
+        assertEquals(result.trimIndent(), expectedDelta)
+    }
+
+    @Test
+    fun `sarif fix adapter test 2`() {
+        val sarifFilePath = "src/commonTest/resources/sarif-fixes-2.sarif".toPath()
+        val testFile = "src/commonTest/resources/targets/autofix/autofix.py".toPath()
+
+        val sarifFixAdapter = SarifFixAdapter(
+            sarifFile = sarifFilePath,
+            testFiles = listOf(testFile)
+        )
+
+        val processedFile = sarifFixAdapter.process().first()!!
+
+        val result = diff(fs.readLines(testFile), fs.readLines(processedFile)).let { patch ->
+            if (patch.deltas.isEmpty()) {
+                ""
+            } else {
+                patch.formatToString()
+            }
+        }
+
+        val expectedDelta =
+                """
+                    ChangeDelta, position 4, lines:
+                    -  inputs[[]x[]] = 1
+                    +  <  >inputs<.get(>x<)> = 1
+                    
+                    
+                    -  if inputs[[]x + 1[]] == True:
+                    +  <  >if inputs<.get(>x + 1<)> == True:
                 """.trimIndent()
 
         assertEquals(result.trimIndent(), expectedDelta)
