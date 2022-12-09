@@ -20,7 +20,7 @@
                   "replacements": [
                     {
                       "deletedRegion": {
-                        "endColumn": 12,
+                        "endColumn": 16,
                         "endLine": 5,
                         "startColumn": 3,
                         "startLine": 5
@@ -45,7 +45,7 @@
                   "uriBaseId": "%SRCROOT%"
                 },
                 "region": {
-                  "endColumn": 12,
+                  "endColumn": 16,
                   "endLine": 5,
                   "snippet": {
                     "text": "  inputs[x] = 1"
@@ -72,9 +72,9 @@
                   "replacements": [
                     {
                       "deletedRegion": {
-                        "endColumn": 19,
+                        "endColumn": 28,
                         "endLine": 6,
-                        "startColumn": 6,
+                        "startColumn": 3,
                         "startLine": 6
                       },
                       "insertedContent": {
@@ -97,12 +97,12 @@
                   "uriBaseId": "%SRCROOT%"
                 },
                 "region": {
-                  "endColumn": 19,
+                  "endColumn": 28,
                   "endLine": 6,
                   "snippet": {
                     "text": "  if inputs[x + 1] == True:"
                   },
-                  "startColumn": 6,
+                  "startColumn": 3,
                   "startLine": 6
                 }
               }

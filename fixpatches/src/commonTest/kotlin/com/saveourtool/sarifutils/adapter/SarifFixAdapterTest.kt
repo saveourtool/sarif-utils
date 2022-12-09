@@ -316,15 +316,19 @@ class SarifFixAdapterTest {
                 patch.formatToString()
             }
         }
-        println(result)
+
         val expectedDelta =
             """
-                    ChangeDelta, position 8, lines:
-                    -    [NA]me[_]M[Y]a[_s]ayR[_]
-                    +    <na>meM<y>a<S>ayR
-                """.trimIndent()
+                ChangeDelta, position 4, lines:
+                -  inputs[[]x[]] = 1
+                +  <  >inputs<.get(>x<)> = 1
+                
+                
+                -  if inputs[[]x + 1[]] == True:
+                +  <  >if inputs<.get(>x + 1<)> == True:
+            """.trimIndent()
 
-        //assertEquals(result.trimIndent(), expectedDelta)
+        assertEquals(result.trimIndent(), expectedDelta)
     }
 
     private fun Patch<String>.formatToString() = deltas.joinToString("\n") { delta ->
