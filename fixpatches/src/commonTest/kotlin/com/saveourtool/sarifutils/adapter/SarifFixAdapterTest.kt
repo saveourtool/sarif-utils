@@ -318,15 +318,15 @@ class SarifFixAdapterTest {
         }
 
         val expectedDelta =
-            """
-                ChangeDelta, position 4, lines:
-                -  inputs[[]x[]] = 1
-                +  <  >inputs<.get(>x<)> = 1
-                
-                
-                -  if inputs[[]x + 1[]] == True:
-                +  <  >if inputs<.get(>x + 1<)> == True:
-            """.trimIndent()
+                """
+                    ChangeDelta, position 4, lines:
+                    -  inputs[[]x[]] = 1
+                    +  <  >inputs<.get(>x<)> = 1
+                    
+                    
+                    -  if inputs[[]x + 1[]] == True:
+                    +  <  >if inputs<.get(>x + 1<)> == True:
+                """.trimIndent()
 
         assertEquals(result.trimIndent(), expectedDelta)
     }
