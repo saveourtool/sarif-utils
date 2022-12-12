@@ -20,6 +20,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
 // FixMe: Possible problems with tests on native platforms: https://youtrack.jetbrains.com/issue/KT-54634/MPP-Test-Failure-causes-KotlinJvmTestExecutorexecute1-does-not-define-failure
+// TODO: Extract common parts
 @Suppress("TOO_LONG_FUNCTION")
 class SarifFixAdapterTest {
     private val tmpDir = fs.createTempDir(SarifFixAdapterTest::class.simpleName!!)
@@ -439,6 +440,7 @@ class SarifFixAdapterTest {
         assertEquals(result2.trimIndent(), expectedDelta2)
     }
 
+    // TODO: What with different fixes on the same line?
     @Test
     fun `sarif fix adapter test 4`() {
         val sarifFilePath = "src/commonTest/resources/sarif-warn-and-fixes.sarif".toPath()
