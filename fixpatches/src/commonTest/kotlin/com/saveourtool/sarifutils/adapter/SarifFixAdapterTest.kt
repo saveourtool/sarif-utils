@@ -34,6 +34,7 @@ class SarifFixAdapterTest {
     @Test
     @Suppress("TOO_LONG_FUNCTION")
     fun `should read SARIF report`() {
+        val uri = "file:///C:/dev/sarif/sarif-tutorials/samples/Introduction/simple-example.js"
         val sarif = """
             {
               "version": "2.1.0",
@@ -58,7 +59,7 @@ class SarifFixAdapterTest {
                   "artifacts": [
                     {
                       "location": {
-                        "uri": "file:///C:/dev/sarif/sarif-tutorials/samples/Introduction/simple-example.js"
+                        "uri": $uri
                       }
                     }
                   ],
@@ -72,7 +73,7 @@ class SarifFixAdapterTest {
                         {
                           "physicalLocation": {
                             "artifactLocation": {
-                              "uri": "file:///C:/dev/sarif/sarif-tutorials/samples/Introduction/simple-example.js",
+                              "uri": $uri,
                               "index": 0
                             },
                             "region": {
@@ -99,7 +100,7 @@ class SarifFixAdapterTest {
 
         assertEquals(result.message.text, "'x' is assigned a value but never used.")
         assertEquals(result.locations?.first()?.physicalLocation?.artifactLocation
-            ?.uri, "file:///C:/dev/sarif/sarif-tutorials/samples/Introduction/simple-example.js")
+            ?.uri, uri)
     }
 
     @Test
@@ -329,6 +330,38 @@ class SarifFixAdapterTest {
                 """.trimIndent()
 
         assertEquals(result.trimIndent(), expectedDelta)
+    }
+
+    @Test
+    fun `sarif fix adapter test 3`() {
+        val sarifFilePath = "src/commonTest/resources/sarif-warn-and-fixes.sarif".toPath()
+        val testFile = "src/commonTest/resources/needsfix/NeedsFix.cs".toPath()
+
+        val sarifFixAdapter = SarifFixAdapter(
+            sarifFile = sarifFilePath,
+            testFiles = listOf(testFile)
+        )
+
+        val processedFile = sarifFixAdapter.process().first()!!
+
+        val result = diff(fs.readLines(testFile), fs.readLines(processedFile)).let { patch ->
+            if (patch.deltas.isEmpty()) {
+                ""
+            } else {
+                patch.formatToString()
+            }
+        }
+
+        val expectedDelta =
+            """
+                ChangeDelta, position 6, lines:
+                -        // This [woord i]s spelled wrong.
+                +        // This s spelled wrong.
+
+            """.trimIndent()
+
+        println(result)
+        // assertEquals(result.trimIndent(), expectedDelta)
     }
 
     private fun Patch<String>.formatToString() = deltas.joinToString("\n") { delta ->
