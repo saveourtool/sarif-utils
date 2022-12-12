@@ -19,7 +19,7 @@ import kotlin.test.assertEquals
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
-// https://youtrack.jetbrains.com/issue/KT-54634/MPP-Test-Failure-causes-KotlinJvmTestExecutorexecute1-does-not-define-failure
+// FixMe: Possible problems with tests on native platforms: https://youtrack.jetbrains.com/issue/KT-54634/MPP-Test-Failure-causes-KotlinJvmTestExecutorexecute1-does-not-define-failure
 @Suppress("TOO_LONG_FUNCTION")
 class SarifFixAdapterTest {
     private val tmpDir = fs.createTempDir(SarifFixAdapterTest::class.simpleName!!)
@@ -59,7 +59,7 @@ class SarifFixAdapterTest {
                   "artifacts": [
                     {
                       "location": {
-                        "uri": $uri
+                        "uri": "$uri"
                       }
                     }
                   ],
@@ -73,7 +73,7 @@ class SarifFixAdapterTest {
                         {
                           "physicalLocation": {
                             "artifactLocation": {
-                              "uri": $uri,
+                              "uri": "$uri",
                               "index": 0
                             },
                             "region": {
@@ -242,7 +242,7 @@ class SarifFixAdapterTest {
 
         val firstArtifactChanges = firstFixArtifactChanges.first()
 
-        assertEquals(firstArtifactChanges.filePath, "NeedsFix.cs".toPath())
+        assertEquals(firstArtifactChanges.filePath, "needsfix/NeedsFix.cs".toPath())
 
         // Number of replacements from first artifact change
         assertEquals(firstArtifactChanges.replacements.size, 1)
@@ -256,7 +256,7 @@ class SarifFixAdapterTest {
 
         val secondArtifactChanges = firstFixArtifactChanges.last()
 
-        assertEquals(secondArtifactChanges.filePath, "NeedsFix.cs".toPath())
+        assertEquals(secondArtifactChanges.filePath, "needsfix/NeedsFix.cs".toPath())
 
         // Number of replacements from second artifact change
         assertEquals(secondArtifactChanges.replacements.size, 1)
