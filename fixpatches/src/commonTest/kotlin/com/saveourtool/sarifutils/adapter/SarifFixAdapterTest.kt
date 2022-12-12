@@ -217,6 +217,61 @@ class SarifFixAdapterTest {
 
     @Test
     fun `should extract SARIF fix objects 3`() {
+        val sarifFilePath = "src/commonTest/resources/sarif-fixes-3.sarif".toPath()
+        val sarifFile = fs.readFile(sarifFilePath)
+        val sarifSchema210: SarifSchema210 = Json.decodeFromString(sarifFile)
+
+        val sarifFixAdapter = SarifFixAdapter(
+            sarifFile = sarifFilePath,
+            testFiles = emptyList()
+        )
+        val results = sarifSchema210.runs.map {
+            sarifFixAdapter.extractFixObjects(it)
+        }
+        // Number of runs
+        assertEquals(results.size, 1)
+
+        // Number of fixes (rules) from first run
+        val numberOfFixesFromFirstRun = results.first()
+        assertEquals(numberOfFixesFromFirstRun.size, 1)  // that's mean, that it's only one fix
+
+        // Number of first fix artifact changes (probably for several files)
+        val firstFixArtifactChanges = numberOfFixesFromFirstRun.first()!!
+        assertEquals(firstFixArtifactChanges.size, 2)
+
+        val firstArtifactChanges = firstFixArtifactChanges.first()
+
+        assertEquals(firstArtifactChanges.filePath, "src/kotlin/Test1.kt".toPath())
+
+        // Number of replacements from first artifact change
+        assertEquals(firstArtifactChanges.replacements.size, 1)
+
+        val changes = firstArtifactChanges.replacements.first()
+        assertEquals(changes.deletedRegion.startLine, 9)
+        assertEquals(changes.deletedRegion.startColumn, 5)
+        assertEquals(changes.deletedRegion.endLine, 9)
+        assertEquals(changes.deletedRegion.endColumn, 19)
+        assertEquals(changes.insertedContent!!.text, "nameMyaSayR")
+
+        //=========================================================//
+
+        val secondArtifactChanges = firstFixArtifactChanges.last()
+
+        assertEquals(secondArtifactChanges.filePath, "src/kotlin/Test2.kt".toPath())
+
+        // Number of replacements from first artifact change
+        assertEquals(secondArtifactChanges.replacements.size, 1)
+
+        val changes2 = secondArtifactChanges.replacements.first()
+        assertEquals(changes2.deletedRegion.startLine, 9)
+        assertEquals(changes2.deletedRegion.startColumn, 5)
+        assertEquals(changes2.deletedRegion.endLine, 9)
+        assertEquals(changes2.deletedRegion.endColumn, 19)
+        assertEquals(changes2.insertedContent!!.text, "nameMyaSayR")
+    }
+
+    @Test
+    fun `should extract SARIF fix objects 4`() {
         val sarifFilePath = "src/commonTest/resources/sarif-warn-and-fixes.sarif".toPath()
         val sarifFile = fs.readFile(sarifFilePath)
         val sarifSchema210: SarifSchema210 = Json.decodeFromString(sarifFile)
@@ -334,6 +389,58 @@ class SarifFixAdapterTest {
 
     @Test
     fun `sarif fix adapter test 3`() {
+        val sarifFilePath = "src/commonTest/resources/sarif-fixes-3.sarif".toPath()
+        val testFiles = listOf(
+            "src/commonTest/resources/src/kotlin/Test1.kt".toPath(),
+            "src/commonTest/resources/src/kotlin/Test2.kt".toPath()
+        )
+
+        val sarifFixAdapter = SarifFixAdapter(
+            sarifFile = sarifFilePath,
+            testFiles = testFiles
+        )
+
+        val processedFiles = sarifFixAdapter.process()
+        val firstProcessedFile = processedFiles.first()!!
+        val secondProcessedFile = processedFiles.last()!!
+
+        val result = diff(fs.readLines(testFiles.first()), fs.readLines(firstProcessedFile)).let { patch ->
+            if (patch.deltas.isEmpty()) {
+                ""
+            } else {
+                patch.formatToString()
+            }
+        }
+        val expectedDelta =
+            """
+                    ChangeDelta, position 8, lines:
+                    -    [NA]me[_]M[Y]a[_s]ayR[_]
+                    +    <na>meM<y>a<S>ayR
+                """.trimIndent()
+
+        assertEquals(result.trimIndent(), expectedDelta)
+
+        //============================================================//
+
+        val result2 = diff(fs.readLines(testFiles.first()), fs.readLines(secondProcessedFile)).let { patch ->
+            if (patch.deltas.isEmpty()) {
+                ""
+            } else {
+                patch.formatToString()
+            }
+        }
+        val expectedDelta2 =
+            """
+                    ChangeDelta, position 8, lines:
+                    -    [NA]me[_]M[Y]a[_s]ayR[_]
+                    +    <na>meM<y>a<S>ayR
+                """.trimIndent()
+
+        assertEquals(result2.trimIndent(), expectedDelta2)
+    }
+
+    @Test
+    fun `sarif fix adapter test 4`() {
         val sarifFilePath = "src/commonTest/resources/sarif-warn-and-fixes.sarif".toPath()
         val testFile = "src/commonTest/resources/needsfix/NeedsFix.cs".toPath()
 
