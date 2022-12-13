@@ -390,7 +390,6 @@ class SarifFixAdapterTest {
         assertEquals(diff2.trimIndent(), expectedDelta2)
     }
 
-    // TODO: What with different fixes on the same line?
     @Test
     fun `sarif fix adapter test 4`() {
         val sarifFilePath = "src/commonTest/resources/sarif-warn-and-fixes.sarif".toPath()
@@ -408,8 +407,8 @@ class SarifFixAdapterTest {
         val expectedDelta =
             """
                 ChangeDelta, position 6, lines:
-                -        // This [woord i]s spelled wrong.
-                +        // This s spelled wrong.
+                -        // This wo[o]rd is spelled wrong.
+                +        // This word is spelled wrong.
             """.trimIndent()
 
         assertEquals(diff.trimIndent(), expectedDelta)

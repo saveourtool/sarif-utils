@@ -3,6 +3,9 @@ package com.saveourtool.sarifutils.cli.config
 import io.github.detekt.sarif4k.Replacement
 import okio.Path
 
+/**
+ * The list of all replacements from one rule (for different files)
+ */
 typealias RuleReplacements = List<FileReplacements>
 
 /**
