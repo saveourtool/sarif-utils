@@ -7,10 +7,6 @@ plugins {
     id("com.saveourtool.sarifutils.buildutils.kotlin-library")
 }
 
-application {
-    mainClass.set("com.saveourtool.sarifutils.cli.MainKt")
-}
-
 kotlin {
     val os = getCurrentOperatingSystem()
 

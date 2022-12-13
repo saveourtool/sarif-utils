@@ -62,8 +62,8 @@ fun FileSystem.copyFileContent(
     into: Path,
     mustCreate: Boolean = false
 ) {
-    fs.write(into, mustCreate) {
-        fs.readLines(from).forEach {
+    write(into, mustCreate) {
+        readLines(from).forEach {
             write(
                 (it + "\n").encodeToByteArray()
             )
