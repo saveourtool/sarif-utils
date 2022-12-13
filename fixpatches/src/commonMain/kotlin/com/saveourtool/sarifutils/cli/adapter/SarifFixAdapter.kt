@@ -117,13 +117,13 @@ class SarifFixAdapter(
         }?.values
 
         return listOfAllReplacementsForEachFile?.flatMap { fileReplacements ->
-        // distinct replacements from all rules for each file by `startLine`,
-        // i.e., take only first of possible fixes for each line
-        fileReplacements.distinctBy { fileReplacement ->
-            fileReplacement.replacements.map { replacement ->
-                replacement.deletedRegion.startLine
-               }
-           }
+            // distinct replacements from all rules for each file by `startLine`,
+            // i.e., take only first of possible fixes for each line
+            fileReplacements.distinctBy { fileReplacement ->
+                fileReplacement.replacements.map { replacement ->
+                    replacement.deletedRegion.startLine
+                }
+            }
         }
     }
 

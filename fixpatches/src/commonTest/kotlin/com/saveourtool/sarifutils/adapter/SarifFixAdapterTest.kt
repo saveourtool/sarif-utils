@@ -1,3 +1,5 @@
+@file:Suppress("FILE_IS_TOO_LONG")
+
 package com.saveourtool.sarifutils.adapter
 
 import com.saveourtool.sarifutils.cli.adapter.SarifFixAdapter
@@ -5,13 +7,14 @@ import com.saveourtool.sarifutils.cli.files.createTempDir
 import com.saveourtool.sarifutils.cli.files.fs
 import com.saveourtool.sarifutils.cli.files.readFile
 import com.saveourtool.sarifutils.cli.files.readLines
-import io.github.detekt.sarif4k.Replacement
 
+import io.github.detekt.sarif4k.Replacement
 import io.github.detekt.sarif4k.SarifSchema210
 import io.github.petertrr.diffutils.diff
 import io.github.petertrr.diffutils.patch.ChangeDelta
 import io.github.petertrr.diffutils.patch.Patch
 import io.github.petertrr.diffutils.text.DiffRowGenerator
+import okio.Path
 import okio.Path.Companion.toPath
 
 import kotlin.test.AfterTest
@@ -19,9 +22,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import okio.Path
 
-// FixMe: Possible problems with tests on native platforms: https://youtrack.jetbrains.com/issue/KT-54634/MPP-Test-Failure-causes-KotlinJvmTestExecutorexecute1-does-not-define-failure
+// FixMe: Possible problems with tests on native platforms:
+// https://youtrack.jetbrains.com/issue/KT-54634/MPP-Test-Failure-causes-KotlinJvmTestExecutorexecute1-does-not-define-failure
 @Suppress("TOO_LONG_FUNCTION")
 class SarifFixAdapterTest {
     private val tmpDir = fs.createTempDir(SarifFixAdapterTest::class.simpleName!!)
@@ -188,7 +191,7 @@ class SarifFixAdapterTest {
         val changes = firstArtifactChangesForFirstFix.replacements.first()
         compareDeletedRegion(changes, 5, 3, 5, 16, "  inputs.get(x) = 1")
 
-        // ===================================================================//
+        // =================================================================== //
 
         // Number of second fix artifact changes (probably for several files)
         val secondFixArtifactChanges = numberOfFixesFromFirstRun.last()!!
@@ -239,7 +242,7 @@ class SarifFixAdapterTest {
         val changes = firstArtifactChanges.replacements.first()
         compareDeletedRegion(changes, 9, 5, 9, 19, "nameMyaSayR")
 
-        //=========================================================//
+        // ========================================================= //
 
         val secondArtifactChanges = firstFixArtifactChanges.last()
 
@@ -352,12 +355,11 @@ class SarifFixAdapterTest {
 
     @Test
     fun `sarif fix adapter test 3`() {
-        val sarifFilePath = "src/commonTest/resources/sarif-fixes-3.sarif".toPath()
         val testFiles = listOf(
             "src/commonTest/resources/src/kotlin/Test1.kt".toPath(),
             "src/commonTest/resources/src/kotlin/Test2.kt".toPath()
         )
-
+        val sarifFilePath = "src/commonTest/resources/sarif-fixes-3.sarif".toPath()
         val sarifFixAdapter = SarifFixAdapter(
             sarifFile = sarifFilePath,
             testFiles = testFiles
@@ -369,22 +371,22 @@ class SarifFixAdapterTest {
 
         val diff = calculateDiff(testFiles.first(), firstProcessedFile)
         val expectedDelta =
-            """
-                    ChangeDelta, position 8, lines:
-                    -    [NA]me[_]M[Y]a[_s]ayR[_]
-                    +    <na>meM<y>a<S>ayR
+                """
+                        ChangeDelta, position 8, lines:
+                        -    [NA]me[_]M[Y]a[_s]ayR[_]
+                        +    <na>meM<y>a<S>ayR
                 """.trimIndent()
 
         assertEquals(diff.trimIndent(), expectedDelta)
 
-        //============================================================//
+        // ============================================================ //
 
         val diff2 = calculateDiff(testFiles.last(), secondProcessedFile)
         val expectedDelta2 =
-            """
-                    ChangeDelta, position 8, lines:
-                    -    [NA]me[_]M[Y]a[_s]ayR[_]
-                    +    <na>meM<y>a<S>ayR
+                """
+                        ChangeDelta, position 8, lines:
+                        -    [NA]me[_]M[Y]a[_s]ayR[_]
+                        +    <na>meM<y>a<S>ayR
                 """.trimIndent()
 
         assertEquals(diff2.trimIndent(), expectedDelta2)
@@ -405,15 +407,16 @@ class SarifFixAdapterTest {
         val diff = calculateDiff(testFile, processedFile)
 
         val expectedDelta =
-            """
-                ChangeDelta, position 6, lines:
-                -        // This wo[o]rd is spelled wrong.
-                +        // This word is spelled wrong.
-            """.trimIndent()
+                """
+                    ChangeDelta, position 6, lines:
+                    -        // This wo[o]rd is spelled wrong.
+                    +        // This word is spelled wrong.
+                """.trimIndent()
 
         assertEquals(diff.trimIndent(), expectedDelta)
     }
 
+    @Suppress("TOO_MANY_PARAMETERS")
     private fun compareDeletedRegion(
         changes: Replacement,
         actualStartLine: Long,
@@ -443,11 +446,11 @@ class SarifFixAdapterTest {
     }
 
     private fun calculateDiff(testFile: Path, processedFile: Path) = diff(fs.readLines(testFile), fs.readLines(processedFile)).let { patch ->
-            if (patch.deltas.isEmpty()) {
-                ""
-            } else {
-                patch.formatToString()
-            }
+        if (patch.deltas.isEmpty()) {
+            ""
+        } else {
+            patch.formatToString()
+        }
     }
 
     @AfterTest
