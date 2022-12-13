@@ -34,6 +34,7 @@ class SarifFixAdapter(
      * @return list of files with applied fixes
      */
     fun process(): List<Path> {
+        // TODO: check existence
         val sarifSchema210: SarifSchema210 = Json.decodeFromString(
             fs.readFile(sarifFile)
         )
@@ -92,7 +93,12 @@ class SarifFixAdapter(
         val filteredRuleReplacements = filterRuleReplacements(ruleReplacements)
         filteredRuleReplacements?.mapNotNull { fileReplacements ->
             val testFile = testFiles.find {
-                it.toString().contains(fileReplacements.filePath.toString())
+                val fullPathOfFileFromSarif = if (!fileReplacements.filePath.isAbsolute) {
+                    fs.canonicalize(sarifFile.parent!! / fileReplacements.filePath)
+                } else {
+                    fileReplacements.filePath
+                }
+                fs.canonicalize(it) == fullPathOfFileFromSarif
             }
             if (testFile == null) {
                 println("Couldn't find appropriate test file on the path ${fileReplacements.filePath}, which provided in Sarif!")
