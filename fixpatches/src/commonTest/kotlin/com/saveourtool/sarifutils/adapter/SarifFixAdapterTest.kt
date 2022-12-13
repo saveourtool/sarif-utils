@@ -5,6 +5,7 @@ import com.saveourtool.sarifutils.cli.files.createTempDir
 import com.saveourtool.sarifutils.cli.files.fs
 import com.saveourtool.sarifutils.cli.files.readFile
 import com.saveourtool.sarifutils.cli.files.readLines
+import io.github.detekt.sarif4k.Replacement
 
 import io.github.detekt.sarif4k.SarifSchema210
 import io.github.petertrr.diffutils.diff
@@ -18,9 +19,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import okio.Path
 
 // FixMe: Possible problems with tests on native platforms: https://youtrack.jetbrains.com/issue/KT-54634/MPP-Test-Failure-causes-KotlinJvmTestExecutorexecute1-does-not-define-failure
-// TODO: Extract common parts
 @Suppress("TOO_LONG_FUNCTION")
 class SarifFixAdapterTest {
     private val tmpDir = fs.createTempDir(SarifFixAdapterTest::class.simpleName!!)
@@ -149,11 +150,7 @@ class SarifFixAdapterTest {
         assertEquals(firstArtifactChanges.replacements.size, 1)
 
         val changes = firstArtifactChanges.replacements.first()
-        assertEquals(changes.deletedRegion.startLine, 9)
-        assertEquals(changes.deletedRegion.startColumn, 5)
-        assertEquals(changes.deletedRegion.endLine, 9)
-        assertEquals(changes.deletedRegion.endColumn, 19)
-        assertEquals(changes.insertedContent!!.text, "nameMyaSayR")
+        compareDeletedRegion(changes, 9, 5, 9, 19, "nameMyaSayR")
     }
 
     @Test
@@ -189,11 +186,7 @@ class SarifFixAdapterTest {
         assertEquals(firstArtifactChangesForFirstFix.replacements.size, 1)
 
         val changes = firstArtifactChangesForFirstFix.replacements.first()
-        assertEquals(changes.deletedRegion.startLine, 5)
-        assertEquals(changes.deletedRegion.startColumn, 3)
-        assertEquals(changes.deletedRegion.endLine, 5)
-        assertEquals(changes.deletedRegion.endColumn, 16)
-        assertEquals(changes.insertedContent!!.text, "  inputs.get(x) = 1")
+        compareDeletedRegion(changes, 5, 3, 5, 16, "  inputs.get(x) = 1")
 
         // ===================================================================//
 
@@ -209,11 +202,7 @@ class SarifFixAdapterTest {
         assertEquals(firstArtifactChangesForSecondFix.replacements.size, 1)
 
         val changes2 = firstArtifactChangesForSecondFix.replacements.first()
-        assertEquals(changes2.deletedRegion.startLine, 6)
-        assertEquals(changes2.deletedRegion.startColumn, 3)
-        assertEquals(changes2.deletedRegion.endLine, 6)
-        assertEquals(changes2.deletedRegion.endColumn, 28)
-        assertEquals(changes2.insertedContent!!.text, "  if inputs.get(x + 1) == True:")
+        compareDeletedRegion(changes2, 6, 3, 6, 28, "  if inputs.get(x + 1) == True:")
     }
 
     @Test
@@ -248,11 +237,7 @@ class SarifFixAdapterTest {
         assertEquals(firstArtifactChanges.replacements.size, 1)
 
         val changes = firstArtifactChanges.replacements.first()
-        assertEquals(changes.deletedRegion.startLine, 9)
-        assertEquals(changes.deletedRegion.startColumn, 5)
-        assertEquals(changes.deletedRegion.endLine, 9)
-        assertEquals(changes.deletedRegion.endColumn, 19)
-        assertEquals(changes.insertedContent!!.text, "nameMyaSayR")
+        compareDeletedRegion(changes, 9, 5, 9, 19, "nameMyaSayR")
 
         //=========================================================//
 
@@ -260,15 +245,11 @@ class SarifFixAdapterTest {
 
         assertEquals(secondArtifactChanges.filePath, "src/kotlin/Test2.kt".toPath())
 
-        // Number of replacements from first artifact change
+        // Number of replacements from second artifact change
         assertEquals(secondArtifactChanges.replacements.size, 1)
 
         val changes2 = secondArtifactChanges.replacements.first()
-        assertEquals(changes2.deletedRegion.startLine, 9)
-        assertEquals(changes2.deletedRegion.startColumn, 5)
-        assertEquals(changes2.deletedRegion.endLine, 9)
-        assertEquals(changes2.deletedRegion.endColumn, 19)
-        assertEquals(changes2.insertedContent!!.text, "nameMyaSayR")
+        compareDeletedRegion(changes2, 9, 5, 9, 19, "nameMyaSayR")
     }
 
     @Test
@@ -304,11 +285,7 @@ class SarifFixAdapterTest {
         assertEquals(firstArtifactChanges.replacements.size, 1)
 
         val changes = firstArtifactChanges.replacements.first()
-        assertEquals(changes.deletedRegion.startLine, 7)
-        assertEquals(changes.deletedRegion.startColumn, 17)
-        assertEquals(changes.deletedRegion.endLine, null)
-        assertEquals(changes.deletedRegion.endColumn, 22)
-        assertEquals(changes.insertedContent!!.text, "word")
+        compareDeletedRegion(changes, 7, 17, null, 22, "word")
 
         val secondArtifactChanges = firstFixArtifactChanges.last()
 
@@ -318,11 +295,7 @@ class SarifFixAdapterTest {
         assertEquals(secondArtifactChanges.replacements.size, 1)
 
         val changes2 = secondArtifactChanges.replacements.first()
-        assertEquals(changes2.deletedRegion.startLine, 7)
-        assertEquals(changes2.deletedRegion.startColumn, 17)
-        assertEquals(changes2.deletedRegion.endLine, null)
-        assertEquals(changes2.deletedRegion.endColumn, 23)
-        assertEquals(changes2.insertedContent, null)
+        compareDeletedRegion(changes2, 7, 17, null, 23, null)
     }
 
     @Test
@@ -337,13 +310,8 @@ class SarifFixAdapterTest {
 
         val processedFile = sarifFixAdapter.process().first()!!
 
-        val result = diff(fs.readLines(testFile), fs.readLines(processedFile)).let { patch ->
-            if (patch.deltas.isEmpty()) {
-                ""
-            } else {
-                patch.formatToString()
-            }
-        }
+        val diff = calculateDiff(testFile, processedFile)
+
         val expectedDelta =
                 """
                     ChangeDelta, position 8, lines:
@@ -351,7 +319,7 @@ class SarifFixAdapterTest {
                     +    <na>meM<y>a<S>ayR
                 """.trimIndent()
 
-        assertEquals(result.trimIndent(), expectedDelta)
+        assertEquals(diff.trimIndent(), expectedDelta)
     }
 
     @Test
@@ -366,13 +334,7 @@ class SarifFixAdapterTest {
 
         val processedFile = sarifFixAdapter.process().first()!!
 
-        val result = diff(fs.readLines(testFile), fs.readLines(processedFile)).let { patch ->
-            if (patch.deltas.isEmpty()) {
-                ""
-            } else {
-                patch.formatToString()
-            }
-        }
+        val diff = calculateDiff(testFile, processedFile)
 
         val expectedDelta =
                 """
@@ -385,7 +347,7 @@ class SarifFixAdapterTest {
                     +  <  >if inputs<.get(>x + 1<)> == True:
                 """.trimIndent()
 
-        assertEquals(result.trimIndent(), expectedDelta)
+        assertEquals(diff.trimIndent(), expectedDelta)
     }
 
     @Test
@@ -405,13 +367,7 @@ class SarifFixAdapterTest {
         val firstProcessedFile = processedFiles.first()!!
         val secondProcessedFile = processedFiles.last()!!
 
-        val result = diff(fs.readLines(testFiles.first()), fs.readLines(firstProcessedFile)).let { patch ->
-            if (patch.deltas.isEmpty()) {
-                ""
-            } else {
-                patch.formatToString()
-            }
-        }
+        val diff = calculateDiff(testFiles.first(), firstProcessedFile)
         val expectedDelta =
             """
                     ChangeDelta, position 8, lines:
@@ -419,17 +375,11 @@ class SarifFixAdapterTest {
                     +    <na>meM<y>a<S>ayR
                 """.trimIndent()
 
-        assertEquals(result.trimIndent(), expectedDelta)
+        assertEquals(diff.trimIndent(), expectedDelta)
 
         //============================================================//
 
-        val result2 = diff(fs.readLines(testFiles.first()), fs.readLines(secondProcessedFile)).let { patch ->
-            if (patch.deltas.isEmpty()) {
-                ""
-            } else {
-                patch.formatToString()
-            }
-        }
+        val diff2 = calculateDiff(testFiles.last(), secondProcessedFile)
         val expectedDelta2 =
             """
                     ChangeDelta, position 8, lines:
@@ -437,7 +387,7 @@ class SarifFixAdapterTest {
                     +    <na>meM<y>a<S>ayR
                 """.trimIndent()
 
-        assertEquals(result2.trimIndent(), expectedDelta2)
+        assertEquals(diff2.trimIndent(), expectedDelta2)
     }
 
     // TODO: What with different fixes on the same line?
@@ -453,24 +403,31 @@ class SarifFixAdapterTest {
 
         val processedFile = sarifFixAdapter.process().first()!!
 
-        val result = diff(fs.readLines(testFile), fs.readLines(processedFile)).let { patch ->
-            if (patch.deltas.isEmpty()) {
-                ""
-            } else {
-                patch.formatToString()
-            }
-        }
+        val diff = calculateDiff(testFile, processedFile)
 
         val expectedDelta =
             """
                 ChangeDelta, position 6, lines:
                 -        // This [woord i]s spelled wrong.
                 +        // This s spelled wrong.
-
             """.trimIndent()
 
-        println(result)
-        // assertEquals(result.trimIndent(), expectedDelta)
+        assertEquals(diff.trimIndent(), expectedDelta)
+    }
+
+    private fun compareDeletedRegion(
+        changes: Replacement,
+        actualStartLine: Long,
+        actualStartColumn: Long,
+        actualEndLine: Long?,
+        actualEndColumn: Long,
+        actualInsertedText: String?,
+    ) {
+        assertEquals(changes.deletedRegion.startLine, actualStartLine)
+        assertEquals(changes.deletedRegion.startColumn, actualStartColumn)
+        assertEquals(changes.deletedRegion.endLine, actualEndLine)
+        assertEquals(changes.deletedRegion.endColumn, actualEndColumn)
+        assertEquals(changes.insertedContent?.text, actualInsertedText)
     }
 
     private fun Patch<String>.formatToString() = deltas.joinToString("\n") { delta ->
@@ -484,6 +441,14 @@ class SarifFixAdapterTest {
                 }
             else -> delta.toString()
         }
+    }
+
+    private fun calculateDiff(testFile: Path, processedFile: Path) = diff(fs.readLines(testFile), fs.readLines(processedFile)).let { patch ->
+            if (patch.deltas.isEmpty()) {
+                ""
+            } else {
+                patch.formatToString()
+            }
     }
 
     @AfterTest
