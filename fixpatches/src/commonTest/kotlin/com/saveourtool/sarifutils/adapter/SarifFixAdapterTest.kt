@@ -142,7 +142,7 @@ class SarifFixAdapterTest {
         assertEquals(numberOfFixesFromFirstRun.size, 1)  // that's mean, that it's only one fix
 
         // Number of first fix artifact changes (probably for several files)
-        val firstFixArtifactChanges = numberOfFixesFromFirstRun.first()!!
+        val firstFixArtifactChanges = numberOfFixesFromFirstRun.first()
         assertEquals(firstFixArtifactChanges.size, 1)
 
         val firstArtifactChanges = firstFixArtifactChanges.first()
@@ -178,7 +178,7 @@ class SarifFixAdapterTest {
         assertEquals(numberOfFixesFromFirstRun.size, 2)
 
         // Number of first fix artifact changes (probably for several files)
-        val firstFixArtifactChanges = numberOfFixesFromFirstRun.first()!!
+        val firstFixArtifactChanges = numberOfFixesFromFirstRun.first()
         assertEquals(firstFixArtifactChanges.size, 1)
 
         val firstArtifactChangesForFirstFix = firstFixArtifactChanges.first()
@@ -194,7 +194,7 @@ class SarifFixAdapterTest {
         // =================================================================== //
 
         // Number of second fix artifact changes (probably for several files)
-        val secondFixArtifactChanges = numberOfFixesFromFirstRun.last()!!
+        val secondFixArtifactChanges = numberOfFixesFromFirstRun.last()
         assertEquals(secondFixArtifactChanges.size, 1)
 
         val firstArtifactChangesForSecondFix = secondFixArtifactChanges.first()
@@ -229,7 +229,7 @@ class SarifFixAdapterTest {
         assertEquals(numberOfFixesFromFirstRun.size, 1)  // that's mean, that it's only one fix
 
         // Number of first fix artifact changes (probably for several files)
-        val firstFixArtifactChanges = numberOfFixesFromFirstRun.first()!!
+        val firstFixArtifactChanges = numberOfFixesFromFirstRun.first()
         assertEquals(firstFixArtifactChanges.size, 2)
 
         val firstArtifactChanges = firstFixArtifactChanges.first()
@@ -277,7 +277,7 @@ class SarifFixAdapterTest {
         assertEquals(numberOfFixesFromFirstRun.size, 1)  // that's mean, that it's only one fix
 
         // Number of first fix artifact changes (probably for several files)
-        val firstFixArtifactChanges = numberOfFixesFromFirstRun.first()!!
+        val firstFixArtifactChanges = numberOfFixesFromFirstRun.first()
         assertEquals(firstFixArtifactChanges.size, 2)
 
         val firstArtifactChanges = firstFixArtifactChanges.first()
@@ -311,7 +311,7 @@ class SarifFixAdapterTest {
             testFiles = listOf(testFile)
         )
 
-        val processedFile = sarifFixAdapter.process().first()!!
+        val processedFile = sarifFixAdapter.process().first()
 
         val diff = calculateDiff(testFile, processedFile)
 
@@ -335,7 +335,7 @@ class SarifFixAdapterTest {
             testFiles = listOf(testFile)
         )
 
-        val processedFile = sarifFixAdapter.process().first()!!
+        val processedFile = sarifFixAdapter.process().first()
 
         val diff = calculateDiff(testFile, processedFile)
 
@@ -366,8 +366,8 @@ class SarifFixAdapterTest {
         )
 
         val processedFiles = sarifFixAdapter.process()
-        val firstProcessedFile = processedFiles.first()!!
-        val secondProcessedFile = processedFiles.last()!!
+        val firstProcessedFile = processedFiles.first()
+        val secondProcessedFile = processedFiles.last()
 
         val diff = calculateDiff(testFiles.first(), firstProcessedFile)
         val expectedDelta =
@@ -402,7 +402,7 @@ class SarifFixAdapterTest {
             testFiles = listOf(testFile)
         )
 
-        val processedFile = sarifFixAdapter.process().first()!!
+        val processedFile = sarifFixAdapter.process().first()
 
         val diff = calculateDiff(testFile, processedFile)
 
