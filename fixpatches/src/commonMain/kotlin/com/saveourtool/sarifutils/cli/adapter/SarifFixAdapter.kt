@@ -34,7 +34,6 @@ class SarifFixAdapter(
      * @return list of files with applied fixes
      */
     fun process(): List<Path> {
-        // TODO: check existence
         val sarifSchema210: SarifSchema210 = Json.decodeFromString(
             fs.readFile(sarifFile)
         )
@@ -42,7 +41,6 @@ class SarifFixAdapter(
         val processedFiles = sarifSchema210.runs.asSequence().flatMapIndexed { index, run ->
             val runReplacements: List<RuleReplacements> = extractFixObjects(run)
             if (runReplacements.isEmpty()) {
-                // TODO: Use logging library
                 println("Run #$index have no `fix object` section!")
                 emptyList()
             } else {
@@ -64,19 +62,21 @@ class SarifFixAdapter(
         }
         // A result object describes a single result detected by an analysis tool.
         // Each result is produced by the evaluation of a rule.
-        return run.results?.asSequence()?.map { result ->
-            // A fix object represents a proposed fix for the problem indicated by the result.
-            // It specifies a set of artifacts to modify.
-            // For each artifact, it specifies regions to remove, and provides new content to insert.
-            result.fixes?.flatMap { fix ->
-                fix.artifactChanges.map { artifactChange ->
-                    // TODO: What if uri is not provided? Could it be?
-                    val filePath = artifactChange.artifactLocation.uri!!.toPath()
-                    val replacements = artifactChange.replacements
-                    FileReplacements(filePath, replacements)
-                }
-            } ?: emptyList()
-        }?.toList() ?: emptyList()
+        return run.results?.asSequence()
+            ?.map { result ->
+                // A fix object represents a proposed fix for the problem indicated by the result.
+                // It specifies a set of artifacts to modify.
+                // For each artifact, it specifies regions to remove, and provides new content to insert.
+                result.fixes?.flatMap { fix ->
+                    fix.artifactChanges.map { artifactChange ->
+                        // TODO: What if uri is not provided? Could it be?
+                        val filePath = artifactChange.artifactLocation.uri!!.toPath()
+                        val replacements = artifactChange.replacements
+                        FileReplacements(filePath, replacements)
+                    }
+                } ?: emptyList()
+            }
+            ?.toList() ?: emptyList()
     }
 
     private fun Run.isFixObjectExist(): Boolean = this.results?.any { result ->
@@ -104,7 +104,7 @@ class SarifFixAdapter(
                 println("Couldn't find appropriate test file on the path ${fileReplacements.filePath}, which provided in Sarif!")
                 null
             } else {
-                applyChangesToFile(testFile, fileReplacements.replacements)
+                applyReplacementsToSingleFile(testFile, fileReplacements.replacements)
             }
         } ?: emptyList()
     }
@@ -139,7 +139,7 @@ class SarifFixAdapter(
      * @param replacements corresponding replacements for [testFile]
      * @return file with applied fixes
      */
-    private fun applyChangesToFile(testFile: Path, replacements: List<Replacement>): Path {
+    private fun applyReplacementsToSingleFile(testFile: Path, replacements: List<Replacement>): Path {
         val testFileCopy = tmpDir.resolve(testFile.name)
         // If file doesn't exist, fill it with original data
         // Otherwise, that's mean, that we already made some changes to it (by other rules),
