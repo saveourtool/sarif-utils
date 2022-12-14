@@ -5,6 +5,7 @@ import com.saveourtool.sarifutils.cli.utils.resolveBaseUri
 import io.github.detekt.sarif4k.SarifSchema210
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import okio.Path
 import okio.Path.Companion.toPath
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -109,23 +110,7 @@ class SarifUtilsTest {
             uriBaseIdInArtifactLocation = "\"uriBaseId\": \"%SRCROOT%\"",
             uriBaseIdInLocations = ""
         )
-        val sarifSchema210: SarifSchema210 = Json.decodeFromString(sarif)
-
-        val run = sarifSchema210.runs.first()
-
-        val result = run
-            .results
-            ?.first()!!
-
-        val artifactLocation = result.fixes!!.first().artifactChanges.first().artifactLocation
-
-        assertEquals(
-            resolveBaseUri(
-                artifactLocation.getUriBaseIdForArtifactLocation(result),
-                run
-            ),
-            "D:/projects".toPath()
-        )
+        assertBaseUri(sarif, "D:/projects".toPath())
     }
 
 
@@ -142,6 +127,50 @@ class SarifUtilsTest {
             uriBaseIdInArtifactLocation = "",
             uriBaseIdInLocations = "\"uriBaseId\": \"%SRCROOT%\""
         )
+        assertBaseUri(sarif, "D:/projects".toPath())
+    }
+
+    @Test
+    fun `should resolve base uri 3`() {
+        val sarif = getSarif(
+            originalUriBaseIds = "",
+            uriBaseIdInArtifactLocation = "\"uriBaseId\": \"%SRCROOT%\"",
+            uriBaseIdInLocations = ""
+        )
+        assertBaseUri(sarif, ".".toPath())
+    }
+
+    @Test
+    fun `should resolve base uri 4`() {
+        val sarif = getSarif(
+            originalUriBaseIds = "",
+            uriBaseIdInArtifactLocation = "",
+            uriBaseIdInLocations = "\"uriBaseId\": \"%SRCROOT%\""
+        )
+        assertBaseUri(sarif, ".".toPath())
+    }
+
+    @Test
+    fun `should resolve base uri 5`() {
+        val sarif = getSarif(
+            originalUriBaseIds = "",
+            uriBaseIdInArtifactLocation = "\"uriBaseId\": \"file://C:/projects/\"",
+            uriBaseIdInLocations = ""
+        )
+        assertBaseUri(sarif, "C:/projects".toPath())
+    }
+
+    @Test
+    fun `should resolve base uri 6`() {
+        val sarif = getSarif(
+            originalUriBaseIds = "",
+            uriBaseIdInArtifactLocation = "",
+            uriBaseIdInLocations = "\"uriBaseId\": \"file://C:/projects/\""
+        )
+        assertBaseUri(sarif, "C:/projects".toPath())
+    }
+
+    private fun assertBaseUri(sarif: String, expectedPath: Path) {
         val sarifSchema210: SarifSchema210 = Json.decodeFromString(sarif)
 
         val run = sarifSchema210.runs.first()
@@ -153,11 +182,11 @@ class SarifUtilsTest {
         val artifactLocation = result.fixes!!.first().artifactChanges.first().artifactLocation
 
         assertEquals(
+            expectedPath,
             resolveBaseUri(
                 artifactLocation.getUriBaseIdForArtifactLocation(result),
                 run
-            ),
-            "D:/projects".toPath()
+            )
         )
     }
 }
