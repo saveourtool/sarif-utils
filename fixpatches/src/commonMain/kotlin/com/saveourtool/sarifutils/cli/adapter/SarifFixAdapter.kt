@@ -6,8 +6,8 @@ import com.saveourtool.sarifutils.cli.files.createTempDir
 import com.saveourtool.sarifutils.cli.files.fs
 import com.saveourtool.sarifutils.cli.files.readFile
 import com.saveourtool.sarifutils.cli.files.readLines
-import com.saveourtool.sarifutils.cli.utils.dropFileProtocol
-import io.github.detekt.sarif4k.ArtifactLocation
+import com.saveourtool.sarifutils.cli.utils.getUriBaseIdForArtifactLocation
+import com.saveourtool.sarifutils.cli.utils.resolveBaseUri
 import io.github.detekt.sarif4k.Replacement
 
 import io.github.detekt.sarif4k.Run
@@ -78,7 +78,7 @@ class SarifFixAdapter(
                         } else {
 
                             val originalUri = resolveBaseUri(
-                                getUriBaseIdForCurrentArtifactLocation(currentArtifactLocation, result),
+                                currentArtifactLocation.getUriBaseIdForArtifactLocation(result),
                                 run
                             )
                             println("ORIGINAL URI: $originalUri")
@@ -95,39 +95,6 @@ class SarifFixAdapter(
     private fun Run.isFixObjectExist(): Boolean = this.results?.any { result ->
         result.fixes != null
     } ?: false
-
-    // uriBaseID could be provided directly in `artifactLocation` or in corresponding field from `locations` scope in `results` scope
-    private fun getUriBaseIdForCurrentArtifactLocation(
-        currentArtifactLocation: ArtifactLocation,
-        result: io.github.detekt.sarif4k.Result
-    ): String? {
-        val uriBaseIDFromLocations = result.locations?.find {
-            it.physicalLocation?.artifactLocation?.uri == currentArtifactLocation.uri
-        }?.physicalLocation?.artifactLocation?.uriBaseID
-        return currentArtifactLocation.uriBaseID ?: uriBaseIDFromLocations
-    }
-
-    // TODO: Move to utils
-    // Recursively resolve base uri: https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html#_Toc34317498
-    private fun resolveBaseUri(uriBaseID: String?, run: Run): Path {
-        // Find corresponding value in `run.originalURIBaseIDS`, otherwise
-        // the tool can set the uriBaseId property to "%srcroot%", which have been agreed that this indicates the root of the source tree in which the file appears.
-        val originalUri = run.originalURIBaseIDS?.get(uriBaseID) ?: return ".".toPath()
-        return if (originalUri.uri == null) {
-            if (originalUri.uriBaseID == null) {
-                ".".toPath()
-            } else {
-                resolveBaseUri(originalUri.uriBaseID!!, run)
-            }
-        } else {
-            val uri = originalUri.uri!!.dropFileProtocol().toPath()
-            if (uri.isAbsolute) {
-                uri
-            } else {
-                resolveBaseUri(originalUri.uriBaseID, run) / uri
-            }
-        }
-    }
 
     /**
      * Apply fixes from single run to the test files
