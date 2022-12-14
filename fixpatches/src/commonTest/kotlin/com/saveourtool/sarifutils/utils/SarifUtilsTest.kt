@@ -154,7 +154,7 @@ class SarifUtilsTest {
     fun `should resolve base uri 5`() {
         val sarif = getSarif(
             originalUriBaseIds = "",
-            uriBaseIdInArtifactLocation = "\"uriBaseId\": \"file:///home/projects/\"",
+            uriBaseIdInArtifactLocation = "\"uriBaseId\": \"file:///C:/projects/\"",
             uriBaseIdInLocations = ""
         )
         assertBaseUri(sarif, "/home/projects".toPath())
@@ -164,10 +164,10 @@ class SarifUtilsTest {
     fun `should resolve base uri 6`() {
         val sarif = getSarif(
             originalUriBaseIds = "",
-            uriBaseIdInArtifactLocation = "\"uriBaseId\": \"/home/projects/\"",
+            uriBaseIdInArtifactLocation = "\"uriBaseId\": \"C:/projects/\"",
             uriBaseIdInLocations = ""
         )
-        assertBaseUri(sarif, "/home/projects".toPath())
+        assertBaseUri(sarif, "C:/projects".toPath())
     }
 
     @Test
@@ -186,7 +186,7 @@ class SarifUtilsTest {
             originalUriBaseIds = """
                 "originalUriBaseIds": {
                      "PROJECTROOT": {
-                        "uri": "file:///home/Users/Mary/code/TheProject/",
+                        "uri": "file:///C:/Users/Mary/code/TheProject/",
                         "description": {
                           "text": "The root directory for all project files."
                         }
@@ -203,7 +203,7 @@ class SarifUtilsTest {
             uriBaseIdInArtifactLocation = "",
             uriBaseIdInLocations = "\"uriBaseId\": \"SRCROOT\""
         )
-        assertBaseUri(sarif, "/home/Users/Mary/code/TheProject/src".toPath())
+        assertBaseUri(sarif, "C:/Users/Mary/code/TheProject/src".toPath())
     }
 
 
