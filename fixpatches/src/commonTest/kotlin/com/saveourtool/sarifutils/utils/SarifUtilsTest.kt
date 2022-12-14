@@ -180,6 +180,33 @@ class SarifUtilsTest {
         assertBaseUri(sarif, "/home/projects".toPath())
     }
 
+    @Test
+    fun `should resolve base uri 8`() {
+        val sarif = getSarif(
+            originalUriBaseIds = """
+                "originalUriBaseIds": {
+                     "PROJECTROOT": {
+                        "uri": "file:///home/Users/Mary/code/TheProject/",
+                        "description": {
+                          "text": "The root directory for all project files."
+                        }
+                     },
+                      "SRCROOT": {
+                        "uri": "src",
+                        "uriBaseId": "PROJECTROOT",
+                        "description": {
+                          "text": "The root of the source tree."
+                        }
+                      }
+                }
+                """,
+            uriBaseIdInArtifactLocation = "",
+            uriBaseIdInLocations = "\"uriBaseId\": \"SRCROOT\""
+        )
+        assertBaseUri(sarif, "/home/Users/Mary/code/TheProject/src".toPath())
+    }
+
+
     private fun assertBaseUri(sarif: String, expectedPath: Path) {
         val sarifSchema210: SarifSchema210 = Json.decodeFromString(sarif)
 
