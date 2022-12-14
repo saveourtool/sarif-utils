@@ -11,7 +11,7 @@ import kotlin.test.assertEquals
 
 class SarifUtilsTest {
     private fun getSarif(
-        uri: String,
+        originalUriBaseIds: String,
         uriBaseIdInArtifactLocation: String,
         uriBaseIdInLocations: String,
     ) = """     
@@ -20,11 +20,7 @@ class SarifUtilsTest {
           "version": "2.1.0",
           "runs": [
             {
-              "originalUriBaseIds": {
-                "%SRCROOT%": {
-                  "uri": "file://D:/projects/"
-                }
-              },
+              $originalUriBaseIds 
               "results": [
                 {
                   "fixes": [
@@ -32,7 +28,7 @@ class SarifUtilsTest {
                       "artifactChanges": [
                         {
                           "artifactLocation": {
-                            "uri": "src/kotlin/EnumValueSnakeCaseTest.kt"
+                            "uri": "src/kotlin/EnumValueSnakeCaseTest.kt"${if (uriBaseIdInArtifactLocation.isNotBlank()) "," else ""}
                             $uriBaseIdInArtifactLocation
                           },
                           "replacements": [
@@ -59,8 +55,8 @@ class SarifUtilsTest {
                     {
                       "physicalLocation": {
                         "artifactLocation": {
-                          "uri": "src/kotlin/EnumValueSnakeCaseTest.kt"
-                          "uriBaseId": "%SRCROOT%"
+                          "uri": "src/kotlin/EnumValueSnakeCaseTest.kt"${if (uriBaseIdInLocations.isNotBlank()) "," else ""}
+                          $uriBaseIdInLocations
                         },
                         "region": {
                           "endColumn": 19,
@@ -101,13 +97,17 @@ class SarifUtilsTest {
 
 
     @Test
-    @Suppress("TOO_LONG_FUNCTION")
-    fun `should read SARIF report`() {
-        val uri = "file:///C:/dev/sarif/sarif-tutorials/samples/Introduction/simple-example.js"
+    fun `should resolve base uri 1`() {
         val sarif = getSarif(
-            uri,
-            "",
-            "\",uriBaseId\": \"%SRCROOT%\""
+            originalUriBaseIds = """
+            "originalUriBaseIds": {
+                "%SRCROOT%": {
+                  "uri": "file://D:/projects/"
+                }
+              },
+                """,
+            uriBaseIdInArtifactLocation = "\"uriBaseId\": \"%SRCROOT%\"",
+            uriBaseIdInLocations = ""
         )
         val sarifSchema210: SarifSchema210 = Json.decodeFromString(sarif)
 
@@ -126,6 +126,38 @@ class SarifUtilsTest {
             ),
             "D:/projects".toPath()
         )
+    }
 
+
+    @Test
+    fun `should resolve base uri 2`() {
+        val sarif = getSarif(
+            originalUriBaseIds = """
+            "originalUriBaseIds": {
+                "%SRCROOT%": {
+                  "uri": "file://D:/projects/"
+                }
+              },
+                """,
+            uriBaseIdInArtifactLocation = "",
+            uriBaseIdInLocations = "\"uriBaseId\": \"%SRCROOT%\""
+        )
+        val sarifSchema210: SarifSchema210 = Json.decodeFromString(sarif)
+
+        val run = sarifSchema210.runs.first()
+
+        val result = run
+            .results
+            ?.first()!!
+
+        val artifactLocation = result.fixes!!.first().artifactChanges.first().artifactLocation
+
+        assertEquals(
+            resolveBaseUri(
+                artifactLocation.getUriBaseIdForArtifactLocation(result),
+                run
+            ),
+            "D:/projects".toPath()
+        )
     }
 }
