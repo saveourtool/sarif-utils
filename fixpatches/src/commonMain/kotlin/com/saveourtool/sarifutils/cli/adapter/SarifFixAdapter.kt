@@ -6,6 +6,7 @@ import com.saveourtool.sarifutils.cli.files.createTempDir
 import com.saveourtool.sarifutils.cli.files.fs
 import com.saveourtool.sarifutils.cli.files.readFile
 import com.saveourtool.sarifutils.cli.files.readLines
+import com.saveourtool.sarifutils.cli.utils.dropFileProtocol
 import io.github.detekt.sarif4k.Replacement
 
 import io.github.detekt.sarif4k.Run
@@ -68,11 +69,17 @@ class SarifFixAdapter(
                 // It specifies a set of artifacts to modify.
                 // For each artifact, it specifies regions to remove, and provides new content to insert.
                 result.fixes?.flatMap { fix ->
-                    fix.artifactChanges.map { artifactChange ->
-                        // TODO: What if uri is not provided? Could it be?
-                        val filePath = artifactChange.artifactLocation.uri!!.toPath()
-                        val replacements = artifactChange.replacements
-                        FileReplacements(filePath, replacements)
+                    fix.artifactChanges.mapNotNull { artifactChange ->
+                        if (artifactChange.artifactLocation.uri == null) {
+                            println("Error: Field `uri` is absent in `artifactLocation`! Ignore this artifact change")
+                            null
+                        } else {
+                            val originalUri = resolveBaseUri(artifactChange.artifactLocation.uriBaseID, run)
+                            println("ORIGINAL URI: $originalUri")
+                            val filePath = artifactChange.artifactLocation.uri!!.toPath()
+                            val replacements = artifactChange.replacements
+                            FileReplacements(filePath, replacements)
+                    }
                     }
                 } ?: emptyList()
             }
@@ -82,6 +89,27 @@ class SarifFixAdapter(
     private fun Run.isFixObjectExist(): Boolean = this.results?.any { result ->
         result.fixes != null
     } ?: false
+
+    // Recursively resolve base uri: https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html#_Toc34317498
+    private fun resolveBaseUri(uriBaseID: String?, run: Run): Path {
+        // Find corresponding value in `run.originalURIBaseIDS`, otherwise
+        // the tool can set the uriBaseId property to "%srcroot%", which have been agreed that this indicates the root of the source tree in which the file appears.
+        val originalUri = run.originalURIBaseIDS?.get(uriBaseID) ?: return ".".toPath()
+        return if (originalUri.uri == null) {
+            if (originalUri.uriBaseID == null) {
+                ".".toPath()
+            } else {
+                resolveBaseUri(originalUri.uriBaseID!!, run)
+            }
+        } else {
+            val uri = originalUri.uri!!.dropFileProtocol().toPath()
+            if (uri.isAbsolute) {
+                uri
+            } else {
+                resolveBaseUri(originalUri.uriBaseID!!, run) / uri
+            }
+        }
+    }
 
     /**
      * Apply fixes from single run to the test files
