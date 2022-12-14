@@ -35,7 +35,6 @@ fun ArtifactLocation.getUriBaseIdForArtifactLocation(
 fun resolveBaseUri(uriBaseID: String?, run: Run): Path {
     // Find corresponding value in `run.originalURIBaseIDS`, otherwise
     // the tool can set the uriBaseId property to "%srcroot%", which have been agreed that this indicates the root of the source tree in which the file appears.
-    println("AAAA ${uriBaseID?.dropFileProtocol()?.toPath()} ${uriBaseID?.dropFileProtocol()?.toPath()?.isAbsolute}")
     val originalUri = if(uriBaseID?.dropFileProtocol()?.toPath()?.isAbsolute == true) {
         return uriBaseID.dropFileProtocol().toPath()
     } else {

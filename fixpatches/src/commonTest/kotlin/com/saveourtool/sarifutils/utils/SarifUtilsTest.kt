@@ -103,14 +103,14 @@ class SarifUtilsTest {
             originalUriBaseIds = """
             "originalUriBaseIds": {
                 "%SRCROOT%": {
-                  "uri": "file://D:/projects/"
+                  "uri": "file:///home/projects/"
                 }
               },
                 """,
             uriBaseIdInArtifactLocation = "\"uriBaseId\": \"%SRCROOT%\"",
             uriBaseIdInLocations = ""
         )
-        assertBaseUri(sarif, "D:/projects".toPath())
+        assertBaseUri(sarif, "/home/projects".toPath())
     }
 
 
@@ -120,14 +120,14 @@ class SarifUtilsTest {
             originalUriBaseIds = """
             "originalUriBaseIds": {
                 "%SRCROOT%": {
-                  "uri": "file://D:/projects/"
+                  "uri": "file:///home/projects/"
                 }
               },
                 """,
             uriBaseIdInArtifactLocation = "",
             uriBaseIdInLocations = "\"uriBaseId\": \"%SRCROOT%\""
         )
-        assertBaseUri(sarif, "D:/projects".toPath())
+        assertBaseUri(sarif, "/home/projects".toPath())
     }
 
     @Test
@@ -154,20 +154,30 @@ class SarifUtilsTest {
     fun `should resolve base uri 5`() {
         val sarif = getSarif(
             originalUriBaseIds = "",
-            uriBaseIdInArtifactLocation = "\"uriBaseId\": \"file://C:/projects/\"",
+            uriBaseIdInArtifactLocation = "\"uriBaseId\": \"file:///home/projects/\"",
             uriBaseIdInLocations = ""
         )
-        assertBaseUri(sarif, "C:/projects".toPath())
+        assertBaseUri(sarif, "/home/projects".toPath())
     }
 
     @Test
     fun `should resolve base uri 6`() {
         val sarif = getSarif(
             originalUriBaseIds = "",
-            uriBaseIdInArtifactLocation = "",
-            uriBaseIdInLocations = "\"uriBaseId\": \"file://C:/projects/\""
+            uriBaseIdInArtifactLocation = "\"uriBaseId\": \"/home/projects/\"",
+            uriBaseIdInLocations = ""
         )
-        assertBaseUri(sarif, "C:/projects".toPath())
+        assertBaseUri(sarif, "/home/projects".toPath())
+    }
+
+    @Test
+    fun `should resolve base uri 7`() {
+        val sarif = getSarif(
+            originalUriBaseIds = "",
+            uriBaseIdInArtifactLocation = "",
+            uriBaseIdInLocations = "\"uriBaseId\": \"file:///home/projects/\""
+        )
+        assertBaseUri(sarif, "/home/projects".toPath())
     }
 
     private fun assertBaseUri(sarif: String, expectedPath: Path) {
