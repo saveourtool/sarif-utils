@@ -7,6 +7,7 @@ import com.saveourtool.sarifutils.cli.files.fs
 import com.saveourtool.sarifutils.cli.files.readFile
 import com.saveourtool.sarifutils.cli.files.readLines
 import com.saveourtool.sarifutils.cli.utils.dropFileProtocol
+import io.github.detekt.sarif4k.ArtifactLocation
 import io.github.detekt.sarif4k.Replacement
 
 import io.github.detekt.sarif4k.Run
@@ -70,13 +71,18 @@ class SarifFixAdapter(
                 // For each artifact, it specifies regions to remove, and provides new content to insert.
                 result.fixes?.flatMap { fix ->
                     fix.artifactChanges.mapNotNull { artifactChange ->
-                        if (artifactChange.artifactLocation.uri == null) {
+                        val currentArtifactLocation = artifactChange.artifactLocation
+                        if (currentArtifactLocation.uri == null) {
                             println("Error: Field `uri` is absent in `artifactLocation`! Ignore this artifact change")
                             null
                         } else {
-                            val originalUri = resolveBaseUri(artifactChange.artifactLocation.uriBaseID, run)
+
+                            val originalUri = resolveBaseUri(
+                                getUriBaseIdForCurrentArtifactLocation(currentArtifactLocation, result),
+                                run
+                            )
                             println("ORIGINAL URI: $originalUri")
-                            val filePath = artifactChange.artifactLocation.uri!!.toPath()
+                            val filePath = currentArtifactLocation.uri!!.toPath()
                             val replacements = artifactChange.replacements
                             FileReplacements(filePath, replacements)
                     }
@@ -90,6 +96,18 @@ class SarifFixAdapter(
         result.fixes != null
     } ?: false
 
+    // uriBaseID could be provided directly in `artifactLocation` or in corresponding field from `locations` scope in `results` scope
+    private fun getUriBaseIdForCurrentArtifactLocation(
+        currentArtifactLocation: ArtifactLocation,
+        result: io.github.detekt.sarif4k.Result
+    ): String? {
+        val uriBaseIDFromLocations = result.locations?.find {
+            it.physicalLocation?.artifactLocation?.uri == currentArtifactLocation.uri
+        }?.physicalLocation?.artifactLocation?.uriBaseID
+        return currentArtifactLocation.uriBaseID ?: uriBaseIDFromLocations
+    }
+
+    // TODO: Move to utils
     // Recursively resolve base uri: https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html#_Toc34317498
     private fun resolveBaseUri(uriBaseID: String?, run: Run): Path {
         // Find corresponding value in `run.originalURIBaseIDS`, otherwise
@@ -106,7 +124,7 @@ class SarifFixAdapter(
             if (uri.isAbsolute) {
                 uri
             } else {
-                resolveBaseUri(originalUri.uriBaseID!!, run) / uri
+                resolveBaseUri(originalUri.uriBaseID, run) / uri
             }
         }
     }
