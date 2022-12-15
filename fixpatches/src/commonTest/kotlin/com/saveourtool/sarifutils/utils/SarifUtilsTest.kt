@@ -158,7 +158,7 @@ class SarifUtilsTest {
             uriBaseIdInArtifactLocation = "\"uriBaseId\": \"file:///C:/projects/\"",
             uriBaseIdInLocations = ""
         )
-        assertBaseUri(sarif, "/home/projects".toPath())
+        assertBaseUri(sarif, "C:/projects/".toPath())
     }
 
     @Test

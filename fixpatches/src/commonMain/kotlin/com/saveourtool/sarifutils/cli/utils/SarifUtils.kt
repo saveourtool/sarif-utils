@@ -20,6 +20,23 @@ fun String.dropFileProtocol() = substringAfter("file://")
     }
 
 /**
+ * For some reasons, okio does not take into account paths like 'C:/abc/drfd' as absolute, because of slashes `/`
+ * replace `/` to the `\\` if any, and call isAbsolute from okio
+ *
+ * @return whether the path is absolute
+ */
+fun Path.adaptedIsAbsolute(): Boolean {
+    val stringRepresentation = this.toString().dropFileProtocol()
+    if (stringRepresentation.length > 2
+        && (stringRepresentation.first() in 'a' .. 'z' || stringRepresentation.first() in 'A' .. 'Z')
+        && (stringRepresentation.get(1) == ':')
+    ) {
+        return stringRepresentation.replace('/', '\\').toPath().isAbsolute
+    }
+    return this.isAbsolute
+}
+
+/**
  * `uriBaseID` could be provided directly in `artifactLocation` or in corresponding field from `locations` scope in `results` scope
  *
  * @param result object describes a single result detected by an analysis tool.
@@ -46,10 +63,9 @@ fun ArtifactLocation.getUriBaseIdForArtifactLocation(
  */
 fun resolveBaseUri(uriBaseId: String?, run: Run): Path {
     // If `uriBaseID` is not absolute path, then it should be the key from `run.originalURIBaseIDS`;
-    // also the tool can set the uriBaseId property to "%srcroot%",
+    // also the tool can set the uriBaseId property to the "%srcroot%" in the absence of `run.originalURIBaseIDS`,
     // which have been agreed that this indicates the root of the source tree in which the file appears.
-    println("================ ${uriBaseId?.dropFileProtocol()?.toPath()} ${uriBaseId?.dropFileProtocol()?.toPath()?.isAbsolute}")
-    val originalUri = if (uriBaseId?.dropFileProtocol()?.toPath()?.isAbsolute == true) {
+    val originalUri = if (uriBaseId?.dropFileProtocol()?.toPath()?.adaptedIsAbsolute() == true) {
         return uriBaseId.dropFileProtocol().toPath()
     } else {
         run.originalURIBaseIDS?.get(uriBaseId) ?: return ".".toPath()
@@ -66,8 +82,7 @@ fun resolveBaseUri(uriBaseId: String?, run: Run): Path {
     } else {
         val uri = originalUri.uri!!.dropFileProtocol().toPath()
         // uri is required path
-        println("22222================ $uri ${uri.isAbsolute}")
-        if (uri.isAbsolute) {
+        if (uri.adaptedIsAbsolute()) {
             uri
             // recursively concatenate uri with the base uri
         } else {
