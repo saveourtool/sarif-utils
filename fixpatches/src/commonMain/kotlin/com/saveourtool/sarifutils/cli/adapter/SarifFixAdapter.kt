@@ -111,7 +111,7 @@ class SarifFixAdapter(
             } else {
                 applyReplacementsToSingleFile(testFile, fileReplacements.replacements)
             }
-        } ?: emptyList()
+        }
     }
 
     /**
