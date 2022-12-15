@@ -2,14 +2,17 @@ package com.saveourtool.sarifutils.utils
 
 import com.saveourtool.sarifutils.cli.utils.getUriBaseIdForArtifactLocation
 import com.saveourtool.sarifutils.cli.utils.resolveBaseUri
+
 import io.github.detekt.sarif4k.SarifSchema210
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
 import okio.Path
 import okio.Path.Companion.toPath
+
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 
+@Suppress("TOO_LONG_FUNCTION")
 class SarifUtilsTest {
     private fun getSarif(
         originalUriBaseIds: String,
@@ -96,7 +99,6 @@ class SarifUtilsTest {
         }
         """.trimIndent()
 
-
     @Test
     fun `should resolve base uri 1`() {
         val sarif = getSarif(
@@ -112,7 +114,6 @@ class SarifUtilsTest {
         )
         assertBaseUri(sarif, "/home/projects".toPath())
     }
-
 
     @Test
     fun `should resolve base uri 2`() {
@@ -206,7 +207,6 @@ class SarifUtilsTest {
         assertBaseUri(sarif, "C:/Users/Mary/code/TheProject/src".toPath())
     }
 
-
     private fun assertBaseUri(sarif: String, expectedPath: Path) {
         val sarifSchema210: SarifSchema210 = Json.decodeFromString(sarif)
 
@@ -216,7 +216,10 @@ class SarifUtilsTest {
             .results
             ?.first()!!
 
-        val artifactLocation = result.fixes!!.first().artifactChanges.first().artifactLocation
+        val artifactLocation = result.fixes!!.first()
+            .artifactChanges
+            .first()
+            .artifactLocation
 
         assertEquals(
             expectedPath,

@@ -5,10 +5,10 @@
 package com.saveourtool.sarifutils.cli.utils
 
 import io.github.detekt.sarif4k.ArtifactLocation
+import io.github.detekt.sarif4k.Result
 import io.github.detekt.sarif4k.Run
 import okio.Path
 import okio.Path.Companion.toPath
-import io.github.detekt.sarif4k.Result
 
 /**
  * @return string with trimmed `file://` or `file:///`
@@ -21,36 +21,55 @@ fun String.dropFileProtocol() = substringAfter("file://")
 
 /**
  * `uriBaseID` could be provided directly in `artifactLocation` or in corresponding field from `locations` scope in `results` scope
+ *
+ * @param result object describes a single result detected by an analysis tool.
+ * @return uriBaseID directly from [ArtifactLocation] or from `locations` section, corresponding to this [ArtifactLocation]
  */
 fun ArtifactLocation.getUriBaseIdForArtifactLocation(
     result: Result
 ): String? {
-    val uriBaseIDFromLocations = result.locations?.find {
+    val uriBaseIdFromLocations = result.locations?.find {
         it.physicalLocation?.artifactLocation?.uri == this.uri
-    }?.physicalLocation?.artifactLocation?.uriBaseID
-    return this.uriBaseID ?: uriBaseIDFromLocations
+    }
+        ?.physicalLocation
+        ?.artifactLocation
+        ?.uriBaseID
+    return this.uriBaseID ?: uriBaseIdFromLocations
 }
 
-// Recursively resolve base uri: https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html#_Toc34317498
-fun resolveBaseUri(uriBaseID: String?, run: Run): Path {
-    // Find corresponding value in `run.originalURIBaseIDS`, otherwise
-    // the tool can set the uriBaseId property to "%srcroot%", which have been agreed that this indicates the root of the source tree in which the file appears.
-    val originalUri = if(uriBaseID?.dropFileProtocol()?.toPath()?.isAbsolute == true) {
-        return uriBaseID.dropFileProtocol().toPath()
+/**
+ * Recursively resolve base uri: https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/sarif-v2.1.0-os.html#_Toc34317498
+ *
+ * @param uriBaseId string which indirectly specifies the absolute URI with respect to which that relative reference is interpreted
+ * @param run describes a single run of an analysis tool, and contains the reported output of that run
+ * @return
+ */
+fun resolveBaseUri(uriBaseId: String?, run: Run): Path {
+    // If `uriBaseID` is not absolute path, then it should be the key from `run.originalURIBaseIDS`;
+    // also the tool can set the uriBaseId property to "%srcroot%",
+    // which have been agreed that this indicates the root of the source tree in which the file appears.
+    println("================ ${uriBaseId?.dropFileProtocol()?.toPath()} ${uriBaseId?.dropFileProtocol()?.toPath()?.isAbsolute}")
+    val originalUri = if (uriBaseId?.dropFileProtocol()?.toPath()?.isAbsolute == true) {
+        return uriBaseId.dropFileProtocol().toPath()
     } else {
-        run.originalURIBaseIDS?.get(uriBaseID) ?: return ".".toPath()
+        run.originalURIBaseIDS?.get(uriBaseId) ?: return ".".toPath()
     }
 
     return if (originalUri.uri == null) {
+        // base uri is the root
         if (originalUri.uriBaseID == null) {
             ".".toPath()
+            // recursively resolve base uri
         } else {
             resolveBaseUri(originalUri.uriBaseID!!, run)
         }
     } else {
         val uri = originalUri.uri!!.dropFileProtocol().toPath()
+        // uri is required path
+        println("22222================ $uri ${uri.isAbsolute}")
         if (uri.isAbsolute) {
             uri
+            // recursively concatenate uri with the base uri
         } else {
             resolveBaseUri(originalUri.uriBaseID, run) / uri
         }

@@ -76,7 +76,6 @@ class SarifFixAdapter(
                             println("Error: Field `uri` is absent in `artifactLocation`! Ignore this artifact change")
                             null
                         } else {
-
                             val originalUri = resolveBaseUri(
                                 currentArtifactLocation.getUriBaseIdForArtifactLocation(result),
                                 run
@@ -85,7 +84,7 @@ class SarifFixAdapter(
                             val filePath = currentArtifactLocation.uri!!.toPath()
                             val replacements = artifactChange.replacements
                             FileReplacements(filePath, replacements)
-                    }
+                        }
                     }
                 } ?: emptyList()
             }
