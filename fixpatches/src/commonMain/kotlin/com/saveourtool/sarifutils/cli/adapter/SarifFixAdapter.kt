@@ -136,9 +136,14 @@ class SarifFixAdapter(
         return listOfAllReplacementsForEachFile?.flatMap { fileReplacements ->
             // distinct replacements from all rules for each file by `startLine`,
             // i.e., take only first of possible fixes for each line
+            val initialSize = fileReplacements.size
             fileReplacements.distinctBy { fileReplacement ->
                 fileReplacement.replacements.map { replacement ->
                     replacement.deletedRegion.startLine
+                }
+            }.also {
+                if (it.size < initialSize) {
+                    println("Some of fixes were ignored, due they refer to same line in one file. Only the first one fix will be applied")
                 }
             }
         }
