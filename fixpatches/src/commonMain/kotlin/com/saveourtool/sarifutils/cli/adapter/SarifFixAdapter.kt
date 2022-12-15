@@ -6,8 +6,9 @@ import com.saveourtool.sarifutils.cli.files.createTempDir
 import com.saveourtool.sarifutils.cli.files.fs
 import com.saveourtool.sarifutils.cli.files.readFile
 import com.saveourtool.sarifutils.cli.files.readLines
+import com.saveourtool.sarifutils.cli.utils.adaptedIsAbsolute
 import com.saveourtool.sarifutils.cli.utils.getUriBaseIdForArtifactLocation
-import com.saveourtool.sarifutils.cli.utils.resolveBaseUri
+import com.saveourtool.sarifutils.cli.utils.resolveUriBaseId
 import io.github.detekt.sarif4k.Replacement
 
 import io.github.detekt.sarif4k.Run
@@ -76,12 +77,11 @@ class SarifFixAdapter(
                             println("Error: Field `uri` is absent in `artifactLocation`! Ignore this artifact change")
                             null
                         } else {
-                            val originalUri = resolveBaseUri(
+                            val uriBaseId = resolveUriBaseId(
                                 currentArtifactLocation.getUriBaseIdForArtifactLocation(result),
                                 run
                             )
-                            println("ORIGINAL URI: $originalUri")
-                            val filePath = currentArtifactLocation.uri!!.toPath()
+                            val filePath = uriBaseId / currentArtifactLocation.uri!!.toPath()
                             val replacements = artifactChange.replacements
                             FileReplacements(filePath, replacements)
                         }
@@ -105,7 +105,7 @@ class SarifFixAdapter(
         val filteredRuleReplacements = filterRuleReplacements(ruleReplacements)
         filteredRuleReplacements?.mapNotNull { fileReplacements ->
             val testFile = testFiles.find {
-                val fullPathOfFileFromSarif = if (!fileReplacements.filePath.isAbsolute) {
+                val fullPathOfFileFromSarif = if (!fileReplacements.filePath.adaptedIsAbsolute()) {
                     fs.canonicalize(sarifFile.parent!! / fileReplacements.filePath)
                 } else {
                     fileReplacements.filePath

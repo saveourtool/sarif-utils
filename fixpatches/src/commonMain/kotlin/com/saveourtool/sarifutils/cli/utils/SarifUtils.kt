@@ -25,11 +25,12 @@ fun String.dropFileProtocol() = substringAfter("file://")
  *
  * @return whether the path is absolute
  */
+@Suppress("FUNCTION_BOOLEAN_PREFIX", "ComplexCondition")
 fun Path.adaptedIsAbsolute(): Boolean {
     val stringRepresentation = this.toString().dropFileProtocol()
-    if (stringRepresentation.length > 2
-        && (stringRepresentation.first() in 'a' .. 'z' || stringRepresentation.first() in 'A' .. 'Z')
-        && (stringRepresentation.get(1) == ':')
+    if (stringRepresentation.length > 2 &&
+            (stringRepresentation.first() in 'a'..'z' || stringRepresentation.first() in 'A'..'Z') &&
+            (stringRepresentation[1] == ':')
     ) {
         return stringRepresentation.replace('/', '\\').toPath().isAbsolute
     }
@@ -59,9 +60,10 @@ fun ArtifactLocation.getUriBaseIdForArtifactLocation(
  *
  * @param uriBaseId string which indirectly specifies the absolute URI with respect to which that relative reference is interpreted
  * @param run describes a single run of an analysis tool, and contains the reported output of that run
- * @return
+ * @return resolved uriBaseId
  */
-fun resolveBaseUri(uriBaseId: String?, run: Run): Path {
+@Suppress("ReturnCount")
+fun resolveUriBaseId(uriBaseId: String?, run: Run): Path {
     // If `uriBaseID` is not absolute path, then it should be the key from `run.originalURIBaseIDS`;
     // also the tool can set the uriBaseId property to the "%srcroot%" in the absence of `run.originalURIBaseIDS`,
     // which have been agreed that this indicates the root of the source tree in which the file appears.
@@ -77,7 +79,7 @@ fun resolveBaseUri(uriBaseId: String?, run: Run): Path {
             ".".toPath()
             // recursively resolve base uri
         } else {
-            resolveBaseUri(originalUri.uriBaseID!!, run)
+            resolveUriBaseId(originalUri.uriBaseID!!, run)
         }
     } else {
         val uri = originalUri.uri!!.dropFileProtocol().toPath()
@@ -86,7 +88,7 @@ fun resolveBaseUri(uriBaseId: String?, run: Run): Path {
             uri
             // recursively concatenate uri with the base uri
         } else {
-            resolveBaseUri(originalUri.uriBaseID, run) / uri
+            resolveUriBaseId(originalUri.uriBaseID, run) / uri
         }
     }
 }

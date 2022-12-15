@@ -1,7 +1,7 @@
 package com.saveourtool.sarifutils.utils
 
 import com.saveourtool.sarifutils.cli.utils.getUriBaseIdForArtifactLocation
-import com.saveourtool.sarifutils.cli.utils.resolveBaseUri
+import com.saveourtool.sarifutils.cli.utils.resolveUriBaseId
 
 import io.github.detekt.sarif4k.SarifSchema210
 import okio.Path
@@ -223,7 +223,7 @@ class SarifUtilsTest {
 
         assertEquals(
             expectedPath,
-            resolveBaseUri(
+            resolveUriBaseId(
                 artifactLocation.getUriBaseIdForArtifactLocation(result),
                 run
             )
