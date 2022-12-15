@@ -11,7 +11,7 @@
       },
       "originalUriBaseIds": {
         "SRCROOT": {
-          "uri": "file:///C:/dev/sarif-visualstudio-extension/src/Sarif.Sarifer/TestData/"
+          "uri": "."
         }
       },
       "results": [

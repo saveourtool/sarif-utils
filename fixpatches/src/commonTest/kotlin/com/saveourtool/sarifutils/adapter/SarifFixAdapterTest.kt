@@ -27,7 +27,6 @@ import kotlinx.serialization.json.Json
 // https://youtrack.jetbrains.com/issue/KT-54634/MPP-Test-Failure-causes-KotlinJvmTestExecutorexecute1-does-not-define-failure
 @Suppress("TOO_LONG_FUNCTION")
 class SarifFixAdapterTest {
-    private val tmpDir = fs.createTempDir(SarifFixAdapterTest::class.simpleName!!)
     private val diffGenerator = DiffRowGenerator(
         showInlineDiffs = true,
         mergeOriginalRevised = false,
@@ -111,7 +110,7 @@ class SarifFixAdapterTest {
     @Test
     fun `should read SARIF file`() {
         val sarifFilePath = "src/commonTest/resources/sarif-fixes.sarif".toPath()
-        val sarifFile = fs.readFile(sarifFilePath)
+        val sarifFile = readFile(sarifFilePath)
         val sarifSchema210: SarifSchema210 = Json.decodeFromString(sarifFile)
 
         val result = sarifSchema210.runs.first()
@@ -124,7 +123,7 @@ class SarifFixAdapterTest {
     @Test
     fun `should extract SARIF fix objects`() {
         val sarifFilePath = "src/commonTest/resources/sarif-fixes.sarif".toPath()
-        val sarifFile = fs.readFile(sarifFilePath)
+        val sarifFile = readFile(sarifFilePath)
         val sarifSchema210: SarifSchema210 = Json.decodeFromString(sarifFile)
 
         val sarifFixAdapter = SarifFixAdapter(
@@ -159,7 +158,7 @@ class SarifFixAdapterTest {
     @Test
     fun `should extract SARIF fix objects 2`() {
         val sarifFilePath = "src/commonTest/resources/sarif-fixes-2.sarif".toPath()
-        val sarifFile = fs.readFile(sarifFilePath)
+        val sarifFile = readFile(sarifFilePath)
         val sarifSchema210: SarifSchema210 = Json.decodeFromString(sarifFile)
 
         val sarifFixAdapter = SarifFixAdapter(
@@ -211,7 +210,7 @@ class SarifFixAdapterTest {
     @Test
     fun `should extract SARIF fix objects 3`() {
         val sarifFilePath = "src/commonTest/resources/sarif-fixes-3.sarif".toPath()
-        val sarifFile = fs.readFile(sarifFilePath)
+        val sarifFile = readFile(sarifFilePath)
         val sarifSchema210: SarifSchema210 = Json.decodeFromString(sarifFile)
 
         val sarifFixAdapter = SarifFixAdapter(
@@ -258,7 +257,7 @@ class SarifFixAdapterTest {
     @Test
     fun `should extract SARIF fix objects 4`() {
         val sarifFilePath = "src/commonTest/resources/sarif-warn-and-fixes.sarif".toPath()
-        val sarifFile = fs.readFile(sarifFilePath)
+        val sarifFile = readFile(sarifFilePath)
         val sarifSchema210: SarifSchema210 = Json.decodeFromString(sarifFile)
 
         val sarifFixAdapter = SarifFixAdapter(
@@ -445,16 +444,11 @@ class SarifFixAdapterTest {
         }
     }
 
-    private fun calculateDiff(testFile: Path, processedFile: Path) = diff(fs.readLines(testFile), fs.readLines(processedFile)).let { patch ->
+    private fun calculateDiff(testFile: Path, processedFile: Path) = diff(readLines(testFile), readLines(processedFile)).let { patch ->
         if (patch.deltas.isEmpty()) {
             ""
         } else {
             patch.formatToString()
         }
-    }
-
-    @AfterTest
-    fun tearDown() {
-        fs.deleteRecursively(tmpDir)
     }
 }

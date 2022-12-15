@@ -6,6 +6,9 @@ import com.saveourtool.sarifutils.cli.files.createTempDir
 import com.saveourtool.sarifutils.cli.files.fs
 import com.saveourtool.sarifutils.cli.files.readFile
 import com.saveourtool.sarifutils.cli.files.readLines
+import com.saveourtool.sarifutils.cli.utils.adaptedIsAbsolute
+import com.saveourtool.sarifutils.cli.utils.getUriBaseIdForArtifactLocation
+import com.saveourtool.sarifutils.cli.utils.resolveUriBaseId
 import io.github.detekt.sarif4k.Replacement
 
 import io.github.detekt.sarif4k.Run
@@ -26,7 +29,7 @@ class SarifFixAdapter(
     private val sarifFile: Path,
     private val testFiles: List<Path>
 ) {
-    private val tmpDir = fs.createTempDir(SarifFixAdapter::class.simpleName!!)
+    private val tmpDir = createTempDir(SarifFixAdapter::class.simpleName!!)
 
     /**
      * Main entry for processing and applying fixes from sarif file into the test files
@@ -35,7 +38,7 @@ class SarifFixAdapter(
      */
     fun process(): List<Path> {
         val sarifSchema210: SarifSchema210 = Json.decodeFromString(
-            fs.readFile(sarifFile)
+            readFile(sarifFile)
         )
         // A run object describes a single run of an analysis tool and contains the output of that run.
         val processedFiles = sarifSchema210.runs.asSequence().flatMapIndexed { index, run ->
@@ -56,10 +59,7 @@ class SarifFixAdapter(
      * @param run describes a single run of an analysis tool, and contains the reported output of that run
      * @return list of replacements for all files from single [run]
      */
-    fun extractFixObjects(run: Run): List<RuleReplacements> {
-        if (!run.isFixObjectExist()) {
-            return emptyList()
-        }
+    internal fun extractFixObjects(run: Run): List<RuleReplacements> {
         // A result object describes a single result detected by an analysis tool.
         // Each result is produced by the evaluation of a rule.
         return run.results?.asSequence()
@@ -68,20 +68,25 @@ class SarifFixAdapter(
                 // It specifies a set of artifacts to modify.
                 // For each artifact, it specifies regions to remove, and provides new content to insert.
                 result.fixes?.flatMap { fix ->
-                    fix.artifactChanges.map { artifactChange ->
-                        // TODO: What if uri is not provided? Could it be?
-                        val filePath = artifactChange.artifactLocation.uri!!.toPath()
-                        val replacements = artifactChange.replacements
-                        FileReplacements(filePath, replacements)
+                    fix.artifactChanges.mapNotNull { artifactChange ->
+                        val currentArtifactLocation = artifactChange.artifactLocation
+                        if (currentArtifactLocation.uri == null) {
+                            println("Error: Field `uri` is absent in `artifactLocation`! Ignore this artifact change")
+                            null
+                        } else {
+                            val uriBaseId = resolveUriBaseId(
+                                currentArtifactLocation.getUriBaseIdForArtifactLocation(result),
+                                run
+                            )
+                            val filePath = uriBaseId / currentArtifactLocation.uri!!.toPath()
+                            val replacements = artifactChange.replacements
+                            FileReplacements(filePath, replacements)
+                        }
                     }
                 } ?: emptyList()
             }
             ?.toList() ?: emptyList()
     }
-
-    private fun Run.isFixObjectExist(): Boolean = this.results?.any { result ->
-        result.fixes != null
-    } ?: false
 
     /**
      * Apply fixes from single run to the test files
@@ -91,9 +96,9 @@ class SarifFixAdapter(
      */
     private fun applyReplacementsToFiles(runReplacements: List<RuleReplacements>, testFiles: List<Path>): List<Path> = runReplacements.flatMap { ruleReplacements ->
         val filteredRuleReplacements = filterRuleReplacements(ruleReplacements)
-        filteredRuleReplacements?.mapNotNull { fileReplacements ->
+        filteredRuleReplacements.mapNotNull { fileReplacements ->
             val testFile = testFiles.find {
-                val fullPathOfFileFromSarif = if (!fileReplacements.filePath.isAbsolute) {
+                val fullPathOfFileFromSarif = if (!fileReplacements.filePath.adaptedIsAbsolute()) {
                     fs.canonicalize(sarifFile.parent!! / fileReplacements.filePath)
                 } else {
                     fileReplacements.filePath
@@ -106,7 +111,7 @@ class SarifFixAdapter(
             } else {
                 applyReplacementsToSingleFile(testFile, fileReplacements.replacements)
             }
-        } ?: emptyList()
+        }
     }
 
     /**
@@ -115,18 +120,23 @@ class SarifFixAdapter(
      * @param ruleReplacements list of replacements by all rules
      * @return filtered list of replacements by all rules
      */
-    private fun filterRuleReplacements(ruleReplacements: RuleReplacements?): RuleReplacements? {
+    private fun filterRuleReplacements(ruleReplacements: RuleReplacements): RuleReplacements {
         // group replacements for each file by all rules
-        val listOfAllReplacementsForEachFile = ruleReplacements?.groupBy { fileReplacement ->
+        val listOfAllReplacementsForEachFile = ruleReplacements.groupBy { fileReplacement ->
             fileReplacement.filePath.toString()
-        }?.values
+        }.values
 
-        return listOfAllReplacementsForEachFile?.flatMap { fileReplacements ->
+        return listOfAllReplacementsForEachFile.flatMap { fileReplacements ->
             // distinct replacements from all rules for each file by `startLine`,
             // i.e., take only first of possible fixes for each line
+            val initialSize = fileReplacements.size
             fileReplacements.distinctBy { fileReplacement ->
                 fileReplacement.replacements.map { replacement ->
                     replacement.deletedRegion.startLine
+                }
+            }.also {
+                if (it.size < initialSize) {
+                    println("Some of fixes were ignored, due they refer to same line in one file. Only the first one fix will be applied")
                 }
             }
         }
@@ -147,7 +157,7 @@ class SarifFixAdapter(
         if (!fs.exists(testFileCopy)) {
             fs.copy(testFile, testFileCopy)
         }
-        val fileContent = fs.readLines(testFileCopy).toMutableList()
+        val fileContent = readLines(testFileCopy).toMutableList()
 
         replacements.forEach { replacement ->
             val startLine = replacement.deletedRegion.startLine!!.toInt() - 1

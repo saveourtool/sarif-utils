@@ -5,7 +5,7 @@
     {
       "originalUriBaseIds": {
         "%SRCROOT%": {
-          "uri": "file://D:/projects/"
+          "uri": "."
         }
       },
       "results": [

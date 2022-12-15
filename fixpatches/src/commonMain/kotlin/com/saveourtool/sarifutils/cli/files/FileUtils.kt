@@ -14,7 +14,7 @@ expect val fs: FileSystem
  * @param path a path to a file
  * @return list of strings from the file
  */
-fun FileSystem.readLines(path: Path): List<String> = this.read(path) {
+internal fun readLines(path: Path): List<String> = fs.read(path) {
     generateSequence { readUtf8Line() }.toList()
 }
 
@@ -22,7 +22,7 @@ fun FileSystem.readLines(path: Path): List<String> = this.read(path) {
  * @param path a path to a file
  * @return string from the file
  */
-fun FileSystem.readFile(path: Path): String = this.read(path) {
+internal fun readFile(path: Path): String = fs.read(path) {
     this.readUtf8()
 }
 
@@ -32,9 +32,9 @@ fun FileSystem.readFile(path: Path): String = this.read(path) {
  * @param prefix will be prepended to directory name
  * @return a [Path] representing the created directory
  */
-fun FileSystem.createTempDir(prefix: String = "sarifutils-tmp"): Path {
+internal fun createTempDir(prefix: String = "sarifutils-tmp"): Path {
     val dirName = "$prefix-${Random.nextInt()}"
     return (FileSystem.SYSTEM_TEMPORARY_DIRECTORY / dirName).also {
-        createDirectory(it)
+        fs.createDirectories(it)
     }
 }
