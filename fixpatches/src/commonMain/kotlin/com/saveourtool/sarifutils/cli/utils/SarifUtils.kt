@@ -13,7 +13,7 @@ import okio.Path.Companion.toPath
 /**
  * @return string with trimmed `file://` or `file:///`
  */
-fun String.dropFileProtocol() = substringAfter("file://")
+internal fun String.dropFileProtocol() = substringAfter("file://")
     .let {
         // It is a valid format for Windows paths to look like `file:///C:/stuff`
         if (it[0] == '/' && it[2] == ':') it.drop(1) else it
@@ -26,7 +26,7 @@ fun String.dropFileProtocol() = substringAfter("file://")
  * @return whether the path is absolute
  */
 @Suppress("FUNCTION_BOOLEAN_PREFIX", "ComplexCondition")
-fun Path.adaptedIsAbsolute(): Boolean {
+internal fun Path.adaptedIsAbsolute(): Boolean {
     val stringRepresentation = this.toString().dropFileProtocol()
     if (stringRepresentation.length > 2 &&
             (stringRepresentation.first() in 'a'..'z' || stringRepresentation.first() in 'A'..'Z') &&
@@ -43,7 +43,7 @@ fun Path.adaptedIsAbsolute(): Boolean {
  * @param result object describes a single result detected by an analysis tool.
  * @return uriBaseID directly from [ArtifactLocation] or from `locations` section, corresponding to this [ArtifactLocation]
  */
-fun ArtifactLocation.getUriBaseIdForArtifactLocation(
+internal fun ArtifactLocation.getUriBaseIdForArtifactLocation(
     result: Result
 ): String? {
     val uriBaseIdFromLocations = result.locations?.find {
@@ -63,7 +63,7 @@ fun ArtifactLocation.getUriBaseIdForArtifactLocation(
  * @return resolved uriBaseId
  */
 @Suppress("ReturnCount")
-fun resolveUriBaseId(uriBaseId: String?, run: Run): Path {
+internal fun resolveUriBaseId(uriBaseId: String?, run: Run): Path {
     // If `uriBaseID` is not absolute path, then it should be the key from `run.originalURIBaseIDS`;
     // also the tool can set the uriBaseId property to the "%srcroot%" in the absence of `run.originalURIBaseIDS`,
     // which have been agreed that this indicates the root of the source tree in which the file appears.
