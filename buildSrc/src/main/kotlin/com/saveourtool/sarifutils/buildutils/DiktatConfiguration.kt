@@ -27,10 +27,10 @@ fun Project.configureDiktat() {
                     "buildSrc/**/*.kts",
                     "*.kts"
                 )
-                exclude("build", "buildSrc/build")
+                exclude("build", "buildSrc/build", "src/**/resources/*")
             } else {
                 include("src/**/*.kt", "*.kts", "src/**/*.kts")
-                exclude("build/**")
+                exclude("build/**", "src/**/resources/*")
             }
         }
     }

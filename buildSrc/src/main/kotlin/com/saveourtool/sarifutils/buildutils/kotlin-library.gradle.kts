@@ -26,16 +26,6 @@ kotlin {
         }
     }
     val nativeTargets = listOf(linuxX64(), mingwX64(), macosX64())
-    if (project.name == "save-common") {
-        // additionally, save-common should be available for JS too
-        // fixme: shouldn't rely on hardcoded project name here
-        js(BOTH).browser()
-
-        // store yarn.lock in the root directory
-        rootProject.extensions.configure<org.jetbrains.kotlin.gradle.targets.js.yarn.YarnRootExtension> {
-            lockFileDirectory = rootProject.projectDir
-        }
-    }
 
     if (hasProperty("disableRedundantTargets") && (property("disableRedundantTargets") as String?) != "false") {
         // with this flag we exclude targets that are present on multiple OS to speed up build

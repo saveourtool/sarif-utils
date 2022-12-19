@@ -8,6 +8,8 @@ on:
 
 jobs:
   build_and_test:
+    # Temporary disable action
+    if: ${{ false }}
     name: Build and test
     runs-on: ${{ matrix.os }}
     strategy:
@@ -97,7 +99,8 @@ jobs:
 
   report:
     name: Publish JUnit test results
-    if: ${{ always() }}
+    # Temporary disable action
+    if: ${{ false }}
     needs: build_and_test
     runs-on: ${{ matrix.os }}
 
