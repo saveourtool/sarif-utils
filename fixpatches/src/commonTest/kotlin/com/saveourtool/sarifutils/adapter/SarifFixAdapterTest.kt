@@ -3,8 +3,6 @@
 package com.saveourtool.sarifutils.adapter
 
 import com.saveourtool.sarifutils.cli.adapter.SarifFixAdapter
-import com.saveourtool.sarifutils.cli.files.createTempDir
-import com.saveourtool.sarifutils.cli.files.fs
 import com.saveourtool.sarifutils.cli.files.readFile
 import com.saveourtool.sarifutils.cli.files.readLines
 
@@ -321,7 +319,7 @@ class SarifFixAdapterTest {
                     +    <na>meM<y>a<S>ayR
                 """.trimIndent()
 
-        assertEquals(diff.trimIndent(), expectedDelta)
+        assertEquals(expectedDelta, diff.trimIndent())
     }
 
     @Test
@@ -349,7 +347,7 @@ class SarifFixAdapterTest {
                     +  <  >if inputs<.get(>x + 1<)> == True:
                 """.trimIndent()
 
-        assertEquals(diff.trimIndent(), expectedDelta)
+        assertEquals(expectedDelta, diff.trimIndent())
     }
 
     @Test
@@ -388,7 +386,7 @@ class SarifFixAdapterTest {
                         +    <na>meM<y>a<S>ayR
                 """.trimIndent()
 
-        assertEquals(diff2.trimIndent(), expectedDelta2)
+        assertEquals(expectedDelta2, diff2.trimIndent())
     }
 
     @Test
@@ -412,7 +410,7 @@ class SarifFixAdapterTest {
                     +        // This word is spelled wrong.
                 """.trimIndent()
 
-        assertEquals(diff.trimIndent(), expectedDelta)
+        assertEquals(expectedDelta, diff.trimIndent())
     }
 
     @Suppress("TOO_MANY_PARAMETERS")

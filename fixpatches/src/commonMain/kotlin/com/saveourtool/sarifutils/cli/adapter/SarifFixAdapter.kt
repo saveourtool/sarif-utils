@@ -126,20 +126,40 @@ class SarifFixAdapter(
             fileReplacement.filePath.toString()
         }.values
 
-        return listOfAllReplacementsForEachFile.flatMap { fileReplacements ->
+        println("-----------------> ${listOfAllReplacementsForEachFile}")
+
+
+
+        return listOfAllReplacementsForEachFile.map { fileReplacementsListForSingleFile ->
             // distinct replacements from all rules for each file by `startLine`,
             // i.e., take only first of possible fixes for each line
-            val initialSize = fileReplacements.size
-            fileReplacements.distinctBy { fileReplacement ->
-                fileReplacement.replacements.map { replacement ->
-                    replacement.deletedRegion.startLine
+            val filePath = fileReplacementsListForSingleFile.first().filePath
+            val c = fileReplacementsListForSingleFile.flatMap { fileReplacements ->
+                fileReplacements.replacements
+            }.groupBy {
+                it.deletedRegion.startLine
+            }.map { entry ->
+                val startLine = entry.key
+                val replacementsList = entry.value
+                if (replacementsList.size > 1) {
+                    println("Some of fixes for $filePath were ignored, due they refer to the same line $startLine in one file." +
+                            "Only the first one fix will be applied")
                 }
-            }.also {
-                if (it.size < initialSize) {
-                    println("Some of fixes were ignored, due they refer to same line in one file. Only the first one fix will be applied")
-                }
+                startLine to replacementsList
+            }.distinctBy {
+                it.first
+            }.flatMap {
+                it.second
             }
+
+            println("==================FINAL REPLACEMENT ${c}")
+
+            FileReplacements(
+                filePath,
+                c
+            )
         }
+        //return ruleReplacements
     }
 
     /**
