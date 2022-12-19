@@ -126,40 +126,35 @@ class SarifFixAdapter(
             fileReplacement.filePath.toString()
         }.values
 
-        println("-----------------> ${listOfAllReplacementsForEachFile}")
-
-
-
+        // distinct replacements from all rules for each file by `startLine`,
+        // i.e., take only first of possible fixes for each line
         return listOfAllReplacementsForEachFile.map { fileReplacementsListForSingleFile ->
-            // distinct replacements from all rules for each file by `startLine`,
-            // i.e., take only first of possible fixes for each line
+            // since we already grouped replacements by file path, it will equal for all elements in list, can take first of them
             val filePath = fileReplacementsListForSingleFile.first().filePath
-            val c = fileReplacementsListForSingleFile.flatMap { fileReplacements ->
+
+            val distinctReplacements = fileReplacementsListForSingleFile.flatMap { fileReplacements ->
+                // map fixes from different rules into single list
                 fileReplacements.replacements
             }.groupBy {
+                // group all fixes for current file by startLine
                 it.deletedRegion.startLine
-            }.map { entry ->
+            }.flatMap { entry ->
                 val startLine = entry.key
                 val replacementsList = entry.value
+
                 if (replacementsList.size > 1) {
-                    println("Some of fixes for $filePath were ignored, due they refer to the same line $startLine in one file." +
-                            "Only the first one fix will be applied")
+                    println("Some of fixes for $filePath were ignored, due they refer to the same line: $startLine." +
+                            " Only the first fix will be applied")
                 }
-                startLine to replacementsList
+                replacementsList
             }.distinctBy {
-                it.first
-            }.flatMap {
-                it.second
+                it.deletedRegion.startLine
             }
-
-            println("==================FINAL REPLACEMENT ${c}")
-
             FileReplacements(
                 filePath,
-                c
+                distinctReplacements
             )
         }
-        //return ruleReplacements
     }
 
     /**
