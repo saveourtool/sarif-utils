@@ -99,9 +99,9 @@ class SarifFixAdapterTest {
             .results
             ?.first()!!
 
-        assertEquals(result.message.text, "'x' is assigned a value but never used.")
-        assertEquals(result.locations?.first()?.physicalLocation?.artifactLocation
-            ?.uri, uri)
+        assertEquals("'x' is assigned a value but never used.", result.message.text)
+        assertEquals(uri, result.locations?.first()?.physicalLocation?.artifactLocation
+            ?.uri)
     }
 
     @Test
@@ -114,7 +114,7 @@ class SarifFixAdapterTest {
             .results
             ?.first()!!
 
-        assertEquals(result.message.text, "[ENUM_VALUE] enum values should be in selected UPPER_CASE snake/PascalCase format: NAme_MYa_sayR_")
+        assertEquals("[ENUM_VALUE] enum values should be in selected UPPER_CASE snake/PascalCase format: NAme_MYa_sayR_", result.message.text)
     }
 
     @Test
@@ -125,28 +125,28 @@ class SarifFixAdapterTest {
 
         val sarifFixAdapter = SarifFixAdapter(
             sarifFile = sarifFilePath,
-            testFiles = emptyList()
+            targetFiles = emptyList()
         )
         val results = sarifSchema210.runs.map {
             sarifFixAdapter.extractFixObjects(it)
         }
         // Number of runs
-        assertEquals(results.size, 1)
+        assertEquals(1, results.size)
 
         // Number of fixes (rules) from first run
         val numberOfFixesFromFirstRun = results.first()
-        assertEquals(numberOfFixesFromFirstRun.size, 1)  // that's mean, that it's only one fix
+        assertEquals(1, numberOfFixesFromFirstRun.size)  // that's mean, that it's only one fix
 
         // Number of first fix artifact changes (probably for several files)
         val firstFixArtifactChanges = numberOfFixesFromFirstRun.first()
-        assertEquals(firstFixArtifactChanges.size, 1)
+        assertEquals(1, firstFixArtifactChanges.size)
 
         val firstArtifactChanges = firstFixArtifactChanges.first()
 
-        assertEquals(firstArtifactChanges.filePath, "src/kotlin/EnumValueSnakeCaseTest.kt".toPath())
+        assertEquals("src/kotlin/EnumValueSnakeCaseTest.kt".toPath(), firstArtifactChanges.filePath)
 
         // Number of replacements from first artifact change
-        assertEquals(firstArtifactChanges.replacements.size, 1)
+        assertEquals(1, firstArtifactChanges.replacements.size)
 
         val changes = firstArtifactChanges.replacements.first()
         compareDeletedRegion(changes, 9, 5, 9, 19, "nameMyaSayR")
@@ -160,29 +160,29 @@ class SarifFixAdapterTest {
 
         val sarifFixAdapter = SarifFixAdapter(
             sarifFile = sarifFilePath,
-            testFiles = emptyList()
+            targetFiles = emptyList()
         )
         val results = sarifSchema210.runs.map {
             sarifFixAdapter.extractFixObjects(it)
         }
 
         // Number of runs
-        assertEquals(results.size, 1)
+        assertEquals(1, results.size)
 
         // Number of fixes (rules) from first run
         val numberOfFixesFromFirstRun = results.first()
-        assertEquals(numberOfFixesFromFirstRun.size, 2)
+        assertEquals(2, numberOfFixesFromFirstRun.size)
 
         // Number of first fix artifact changes (probably for several files)
         val firstFixArtifactChanges = numberOfFixesFromFirstRun.first()
-        assertEquals(firstFixArtifactChanges.size, 1)
+        assertEquals(1, firstFixArtifactChanges.size)
 
         val firstArtifactChangesForFirstFix = firstFixArtifactChanges.first()
 
-        assertEquals(firstArtifactChangesForFirstFix.filePath, "targets/autofix/autofix.py".toPath())
+        assertEquals("targets/autofix/autofix.py".toPath(), firstArtifactChangesForFirstFix.filePath)
 
         // Number of replacements from first artifact change
-        assertEquals(firstArtifactChangesForFirstFix.replacements.size, 1)
+        assertEquals(1, firstArtifactChangesForFirstFix.replacements.size)
 
         val changes = firstArtifactChangesForFirstFix.replacements.first()
         compareDeletedRegion(changes, 5, 3, 5, 16, "  inputs.get(x) = 1")
@@ -191,14 +191,14 @@ class SarifFixAdapterTest {
 
         // Number of second fix artifact changes (probably for several files)
         val secondFixArtifactChanges = numberOfFixesFromFirstRun.last()
-        assertEquals(secondFixArtifactChanges.size, 1)
+        assertEquals(1, secondFixArtifactChanges.size)
 
         val firstArtifactChangesForSecondFix = secondFixArtifactChanges.first()
 
-        assertEquals(firstArtifactChangesForSecondFix.filePath, "targets/autofix/autofix.py".toPath())
+        assertEquals("targets/autofix/autofix.py".toPath(), firstArtifactChangesForSecondFix.filePath)
 
         // Number of replacements from first artifact change
-        assertEquals(firstArtifactChangesForSecondFix.replacements.size, 1)
+        assertEquals(1, firstArtifactChangesForSecondFix.replacements.size)
 
         val changes2 = firstArtifactChangesForSecondFix.replacements.first()
         compareDeletedRegion(changes2, 6, 3, 6, 28, "  if inputs.get(x + 1) == True:")
@@ -212,28 +212,28 @@ class SarifFixAdapterTest {
 
         val sarifFixAdapter = SarifFixAdapter(
             sarifFile = sarifFilePath,
-            testFiles = emptyList()
+            targetFiles = emptyList()
         )
         val results = sarifSchema210.runs.map {
             sarifFixAdapter.extractFixObjects(it)
         }
         // Number of runs
-        assertEquals(results.size, 1)
+        assertEquals(1, results.size)
 
         // Number of fixes (rules) from first run
         val numberOfFixesFromFirstRun = results.first()
-        assertEquals(numberOfFixesFromFirstRun.size, 1)  // that's mean, that it's only one fix
+        assertEquals(1, numberOfFixesFromFirstRun.size)  // that's mean, that it's only one fix
 
         // Number of first fix artifact changes (probably for several files)
         val firstFixArtifactChanges = numberOfFixesFromFirstRun.first()
-        assertEquals(firstFixArtifactChanges.size, 2)
+        assertEquals(2, firstFixArtifactChanges.size)
 
         val firstArtifactChanges = firstFixArtifactChanges.first()
 
-        assertEquals(firstArtifactChanges.filePath, "src/kotlin/Test1.kt".toPath())
+        assertEquals("src/kotlin/Test1.kt".toPath(), firstArtifactChanges.filePath)
 
         // Number of replacements from first artifact change
-        assertEquals(firstArtifactChanges.replacements.size, 1)
+        assertEquals(1, firstArtifactChanges.replacements.size)
 
         val changes = firstArtifactChanges.replacements.first()
         compareDeletedRegion(changes, 9, 5, 9, 19, "nameMyaSayR")
@@ -245,7 +245,7 @@ class SarifFixAdapterTest {
         assertEquals(secondArtifactChanges.filePath, "src/kotlin/Test2.kt".toPath())
 
         // Number of replacements from second artifact change
-        assertEquals(secondArtifactChanges.replacements.size, 1)
+        assertEquals(1, secondArtifactChanges.replacements.size)
 
         val changes2 = secondArtifactChanges.replacements.first()
         compareDeletedRegion(changes2, 9, 5, 9, 19, "nameMyaSayR")
@@ -259,39 +259,39 @@ class SarifFixAdapterTest {
 
         val sarifFixAdapter = SarifFixAdapter(
             sarifFile = sarifFilePath,
-            testFiles = emptyList()
+            targetFiles = emptyList()
         )
         val results = sarifSchema210.runs.map {
             sarifFixAdapter.extractFixObjects(it)
         }
 
         // Number of runs
-        assertEquals(results.size, 1)
+        assertEquals(1, results.size)
 
         // Number of fixes (rules) from first run
         val numberOfFixesFromFirstRun = results.first()
-        assertEquals(numberOfFixesFromFirstRun.size, 1)  // that's mean, that it's only one fix
+        assertEquals(1, numberOfFixesFromFirstRun.size)  // that's mean, that it's only one fix
 
         // Number of first fix artifact changes (probably for several files)
         val firstFixArtifactChanges = numberOfFixesFromFirstRun.first()
-        assertEquals(firstFixArtifactChanges.size, 2)
+        assertEquals(2, firstFixArtifactChanges.size)
 
         val firstArtifactChanges = firstFixArtifactChanges.first()
 
-        assertEquals(firstArtifactChanges.filePath, "needsfix/NeedsFix.cs".toPath())
+        assertEquals("needsfix/NeedsFix.cs".toPath(), firstArtifactChanges.filePath)
 
         // Number of replacements from first artifact change
-        assertEquals(firstArtifactChanges.replacements.size, 1)
+        assertEquals(1, firstArtifactChanges.replacements.size)
 
         val changes = firstArtifactChanges.replacements.first()
         compareDeletedRegion(changes, 7, 17, null, 22, "word")
 
         val secondArtifactChanges = firstFixArtifactChanges.last()
 
-        assertEquals(secondArtifactChanges.filePath, "needsfix/NeedsFix.cs".toPath())
+        assertEquals("needsfix/NeedsFix.cs".toPath(), secondArtifactChanges.filePath)
 
         // Number of replacements from second artifact change
-        assertEquals(secondArtifactChanges.replacements.size, 1)
+        assertEquals(1, secondArtifactChanges.replacements.size)
 
         val changes2 = secondArtifactChanges.replacements.first()
         compareDeletedRegion(changes2, 7, 17, null, 23, null)
@@ -304,7 +304,7 @@ class SarifFixAdapterTest {
 
         val sarifFixAdapter = SarifFixAdapter(
             sarifFile = sarifFilePath,
-            testFiles = listOf(testFile)
+            targetFiles = listOf(testFile)
         )
 
         val processedFile = sarifFixAdapter.process().first()
@@ -328,7 +328,7 @@ class SarifFixAdapterTest {
 
         val sarifFixAdapter = SarifFixAdapter(
             sarifFile = sarifFilePath,
-            testFiles = listOf(testFile)
+            targetFiles = listOf(testFile)
         )
 
         val processedFile = sarifFixAdapter.process().first()
@@ -358,7 +358,7 @@ class SarifFixAdapterTest {
         val sarifFilePath = "src/commonTest/resources/sarif-fixes-3.sarif".toPath()
         val sarifFixAdapter = SarifFixAdapter(
             sarifFile = sarifFilePath,
-            testFiles = testFiles
+            targetFiles = testFiles
         )
 
         val processedFiles = sarifFixAdapter.process()
@@ -395,7 +395,7 @@ class SarifFixAdapterTest {
 
         val sarifFixAdapter = SarifFixAdapter(
             sarifFile = sarifFilePath,
-            testFiles = listOf(testFile)
+            targetFiles = listOf(testFile)
         )
 
         val processedFile = sarifFixAdapter.process().first()

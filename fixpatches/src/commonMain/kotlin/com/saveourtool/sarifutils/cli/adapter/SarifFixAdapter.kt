@@ -20,19 +20,19 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
 /**
- * Adapter for applying sarif fix object replacements to the corresponding test files
+ * Adapter for applying sarif fix object replacements to the corresponding target files
  *
  * @param sarifFile path to the sarif file with fix object replacements
- * @param testFiles list of the test file, to which above fixes need to be applied
+ * @param targetFiles list of the target files, to which above fixes need to be applied
  */
 class SarifFixAdapter(
     private val sarifFile: Path,
-    private val testFiles: List<Path>
+    private val targetFiles: List<Path>
 ) {
     private val tmpDir = createTempDir(SarifFixAdapter::class.simpleName!!)
 
     /**
-     * Main entry for processing and applying fixes from sarif file into the test files
+     * Main entry for processing and applying fixes from sarif file into the target files
      *
      * @return list of files with applied fixes
      */
@@ -47,7 +47,7 @@ class SarifFixAdapter(
                 println("Run #$index have no `fix object` section!")
                 emptyList()
             } else {
-                applyReplacementsToFiles(runReplacements, testFiles)
+                applyReplacementsToFiles(runReplacements, targetFiles)
             }
         }
         return processedFiles.toList()
@@ -89,15 +89,15 @@ class SarifFixAdapter(
     }
 
     /**
-     * Apply fixes from single run to the test files
+     * Apply fixes from single run to the target files
      *
      * @param runReplacements list of replacements from all rules
-     * @param testFiles list of test files
+     * @param targetFiles list of target files
      */
-    private fun applyReplacementsToFiles(runReplacements: List<RuleReplacements>, testFiles: List<Path>): List<Path> = runReplacements.flatMap { ruleReplacements ->
+    private fun applyReplacementsToFiles(runReplacements: List<RuleReplacements>, targetFiles: List<Path>): List<Path> = runReplacements.flatMap { ruleReplacements ->
         val filteredRuleReplacements = filterRuleReplacements(ruleReplacements)
         filteredRuleReplacements.mapNotNull { fileReplacements ->
-            val testFile = testFiles.find {
+            val targetFile = targetFiles.find {
                 val fullPathOfFileFromSarif = if (!fileReplacements.filePath.adaptedIsAbsolute()) {
                     fs.canonicalize(sarifFile.parent!! / fileReplacements.filePath)
                 } else {
@@ -105,11 +105,11 @@ class SarifFixAdapter(
                 }
                 fs.canonicalize(it) == fullPathOfFileFromSarif
             }
-            if (testFile == null) {
-                println("Couldn't find appropriate test file on the path ${fileReplacements.filePath}, which provided in Sarif!")
+            if (targetFile == null) {
+                println("Couldn't find appropriate target file on the path ${fileReplacements.filePath}, which provided in Sarif!")
                 null
             } else {
-                applyReplacementsToSingleFile(testFile, fileReplacements.replacements)
+                applyReplacementsToSingleFile(targetFile, fileReplacements.replacements)
             }
         }
     }
@@ -159,21 +159,22 @@ class SarifFixAdapter(
     }
 
     /**
-     * Create copy of the test file and apply fixes from sarif
+     * Create copy of the target file and apply fixes from sarif
      *
-     * @param testFile test file which need to be fixed
-     * @param replacements corresponding replacements for [testFile]
+     * @param targetFile target file which need to be fixed
+     * @param replacements corresponding replacements for [targetFile]
      * @return file with applied fixes
      */
-    private fun applyReplacementsToSingleFile(testFile: Path, replacements: List<Replacement>): Path {
-        val testFileCopy = tmpDir.resolve(testFile.name)
+    @Suppress("TOO_LONG_FUNCTION")
+    private fun applyReplacementsToSingleFile(targetFile: Path, replacements: List<Replacement>): Path {
+        val targetFileCopy = tmpDir.resolve(targetFile.name)
         // If file doesn't exist, fill it with original data
         // Otherwise, that's mean, that we already made some changes to it (by other rules),
         // so continue to work with modified file
-        if (!fs.exists(testFileCopy)) {
-            fs.copy(testFile, testFileCopy)
+        if (!fs.exists(targetFileCopy)) {
+            fs.copy(targetFile, targetFileCopy)
         }
-        val fileContent = readLines(testFileCopy).toMutableList()
+        val fileContent = readLines(targetFileCopy).toMutableList()
 
         replacements.forEach { replacement ->
             val startLine = replacement.deletedRegion.startLine!!.toInt() - 1
@@ -200,11 +201,11 @@ class SarifFixAdapter(
                 }
             }
         }
-        fs.write(testFileCopy) {
+        fs.write(targetFileCopy) {
             fileContent.forEach { line ->
                 writeUtf8(line + '\n')
             }
         }
-        return testFileCopy
+        return targetFileCopy
     }
 }
