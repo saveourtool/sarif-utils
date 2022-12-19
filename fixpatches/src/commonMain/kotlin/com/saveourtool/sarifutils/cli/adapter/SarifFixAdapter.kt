@@ -126,19 +126,35 @@ class SarifFixAdapter(
             fileReplacement.filePath.toString()
         }.values
 
-        return listOfAllReplacementsForEachFile.flatMap { fileReplacements ->
-            // distinct replacements from all rules for each file by `startLine`,
-            // i.e., take only first of possible fixes for each line
-            val initialSize = fileReplacements.size
-            fileReplacements.distinctBy { fileReplacement ->
-                fileReplacement.replacements.map { replacement ->
-                    replacement.deletedRegion.startLine
+        // distinct replacements from all rules for each file by `startLine`,
+        // i.e., take only first of possible fixes for each line
+        return listOfAllReplacementsForEachFile.map { fileReplacementsListForSingleFile ->
+            // since we already grouped replacements by file path, it will equal for all elements in list, can take first of them
+            val filePath = fileReplacementsListForSingleFile.first().filePath
+
+            val distinctReplacements = fileReplacementsListForSingleFile.flatMap { fileReplacements ->
+                // map fixes from different rules into single list
+                fileReplacements.replacements
+            }.groupBy {
+                // group all fixes for current file by startLine
+                it.deletedRegion.startLine
+            }.flatMap { entry ->
+                val startLine = entry.key
+                val replacementsList = entry.value
+
+                if (replacementsList.size > 1) {
+                    println("Some of fixes for $filePath were ignored, due they refer to the same line: $startLine." +
+                            " Only the first fix will be applied")
                 }
-            }.also {
-                if (it.size < initialSize) {
-                    println("Some of fixes were ignored, due they refer to same line in one file. Only the first one fix will be applied")
-                }
+                replacementsList
             }
+                .distinctBy {
+                    it.deletedRegion.startLine
+                }
+            FileReplacements(
+                filePath,
+                distinctReplacements
+            )
         }
     }
 
