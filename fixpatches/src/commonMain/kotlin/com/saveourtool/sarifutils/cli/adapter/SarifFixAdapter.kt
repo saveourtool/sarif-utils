@@ -177,14 +177,27 @@ class SarifFixAdapter(
 
         replacements.forEach { replacement ->
             val startLine = replacement.deletedRegion.startLine!!.toInt() - 1
-            val startColumn = replacement.deletedRegion.startColumn!!.toInt() - 1
-            val endColumn = replacement.deletedRegion.endColumn!!.toInt() - 1
+            val startColumn = replacement.deletedRegion.startColumn?.let {
+                it.toInt() - 1
+            }
+            val endColumn = replacement.deletedRegion.endColumn?.let {
+                it.toInt() - 1
+            }
             val insertedContent = replacement.insertedContent?.text
 
             insertedContent?.let {
-                fileContent[startLine] = fileContent[startLine].replaceRange(startColumn, endColumn, it)
+                if (startColumn != null && endColumn != null) {
+                    fileContent[startLine] = fileContent[startLine].replaceRange(startColumn, endColumn, it)
+                } else {
+                    fileContent[startLine] = it
+                }
             } ?: run {
-                fileContent[startLine] = fileContent[startLine].removeRange(startColumn, endColumn)
+                if (startColumn != null && endColumn != null) {
+                    fileContent[startLine] = fileContent[startLine].removeRange(startColumn, endColumn)
+                } else {
+                    // remove all content but leave empty line, until we support https://github.com/saveourtool/sarif-utils/issues/13
+                    fileContent[startLine] = "\n"
+                }
             }
         }
         fs.write(testFileCopy) {
