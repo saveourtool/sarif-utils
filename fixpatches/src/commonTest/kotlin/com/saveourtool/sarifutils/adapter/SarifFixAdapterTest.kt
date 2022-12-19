@@ -15,7 +15,6 @@ import io.github.petertrr.diffutils.text.DiffRowGenerator
 import okio.Path
 import okio.Path.Companion.toPath
 
-import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.serialization.decodeFromString

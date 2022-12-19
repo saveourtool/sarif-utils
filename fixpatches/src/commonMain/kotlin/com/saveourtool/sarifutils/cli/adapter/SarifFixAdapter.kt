@@ -147,9 +147,10 @@ class SarifFixAdapter(
                             " Only the first fix will be applied")
                 }
                 replacementsList
-            }.distinctBy {
-                it.deletedRegion.startLine
             }
+                .distinctBy {
+                    it.deletedRegion.startLine
+                }
             FileReplacements(
                 filePath,
                 distinctReplacements
