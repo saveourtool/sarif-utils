@@ -124,19 +124,17 @@ class SarifFixAdapter(
      * @param fileReplacementsList list of replacements by all rules
      * @return filtered list of replacements by all rules
      */
-    private fun filterRuleReplacements(fileReplacementsList: List<FileReplacements>): List<FileReplacements> {
-        return fileReplacementsList.map { fileReplacementsListForSingleFile ->
-            val filePath = fileReplacementsListForSingleFile.filePath
-            // sort replacements by startLine
-            val sortedReplacements = sortReplacementsByStartLine(fileReplacementsListForSingleFile)
-            // now, from overlapping fixes, take only the first one
-            val nonOverlappingFixes = getNonOverlappingReplacements(fileReplacementsListForSingleFile.filePath, sortedReplacements)
-            // save replacements in reverse order
-            FileReplacements(
-                filePath,
-                nonOverlappingFixes.reversed()
-            )
-        }
+    private fun filterRuleReplacements(fileReplacementsList: List<FileReplacements>): List<FileReplacements> = fileReplacementsList.map { fileReplacementsListForSingleFile ->
+        val filePath = fileReplacementsListForSingleFile.filePath
+        // sort replacements by startLine
+        val sortedReplacements = sortReplacementsByStartLine(fileReplacementsListForSingleFile)
+        // now, from overlapping fixes, take only the first one
+        val nonOverlappingFixes = getNonOverlappingReplacements(fileReplacementsListForSingleFile.filePath, sortedReplacements)
+        // save replacements in reverse order
+        FileReplacements(
+            filePath,
+            nonOverlappingFixes.reversed()
+        )
     }
 
     /**
@@ -145,24 +143,24 @@ class SarifFixAdapter(
      * @param fileReplacementsListForSingleFile list of replacements for target file
      * @return sorted list of replacements by [startLine]
      */
-    private fun sortReplacementsByStartLine(fileReplacementsListForSingleFile: FileReplacements): List<Replacement> {
-        return fileReplacementsListForSingleFile.replacements.map { replacement ->
-            // it's not require to present endLine, if fix represents the single line changes,
-            // however, for consistency we will set it anyway
-            if (replacement.deletedRegion.endLine == null) {
-                val deletedRegion = replacement.deletedRegion.copy(
-                    endLine = replacement.deletedRegion.startLine
-                )
-                replacement.copy(
-                    deletedRegion = deletedRegion
-                )
-            } else {
-                replacement
-            }
-        }.sortedWith(
-            compareBy( { it.deletedRegion.startLine }, {it.deletedRegion.endLine})
-        )
-    }
+    private fun sortReplacementsByStartLine(
+        fileReplacementsListForSingleFile: FileReplacements
+    ): List<Replacement> = fileReplacementsListForSingleFile.replacements.map { replacement ->
+        // it's not require to present endLine, if fix represents the single line changes,
+        // however, for consistency we will set it anyway
+        if (replacement.deletedRegion.endLine == null) {
+            val deletedRegion = replacement.deletedRegion.copy(
+                endLine = replacement.deletedRegion.startLine
+            )
+            replacement.copy(
+                deletedRegion = deletedRegion
+            )
+        } else {
+            replacement
+        }
+    }.sortedWith(
+        compareBy({ it.deletedRegion.startLine }, { it.deletedRegion.endLine })
+    )
 
     /**
      * For the [sortedReplacements] list take only non overlapping replacements.
@@ -181,8 +179,7 @@ class SarifFixAdapter(
             if (sortedReplacements[i].deletedRegion.startLine!! <= currentEndLine) {
                 println("Fix ${sortedReplacements[i].prettyString()} for $filePath was ignored, due it overlaps with others." +
                         " Only the first fix for this region will be applied.")
-            }
-            else {
+            } else {
                 nonOverlappingFixes.add(sortedReplacements[i])
                 currentEndLine = sortedReplacements[i].deletedRegion.endLine!!
             }
@@ -196,22 +193,20 @@ class SarifFixAdapter(
      * @param fileReplacementsList list of replacements from all rules
      * @param targetFiles list of target files
      */
-    private fun applyReplacementsToFiles(fileReplacementsList: List<FileReplacements>, targetFiles: List<Path>): List<Path> {
-        return fileReplacementsList.mapNotNull { fileReplacements ->
-            val targetFile = targetFiles.find {
-                val fullPathOfFileFromSarif = if (!fileReplacements.filePath.adaptedIsAbsolute()) {
-                    fs.canonicalize(sarifFile.parent!! / fileReplacements.filePath)
-                } else {
-                    fileReplacements.filePath
-                }
-                fs.canonicalize(it) == fullPathOfFileFromSarif
-            }
-            if (targetFile == null) {
-                println("Couldn't find appropriate target file on the path ${fileReplacements.filePath}, which provided in Sarif!")
-                null
+    private fun applyReplacementsToFiles(fileReplacementsList: List<FileReplacements>, targetFiles: List<Path>): List<Path> = fileReplacementsList.mapNotNull { fileReplacements ->
+        val targetFile = targetFiles.find {
+            val fullPathOfFileFromSarif = if (!fileReplacements.filePath.adaptedIsAbsolute()) {
+                fs.canonicalize(sarifFile.parent!! / fileReplacements.filePath)
             } else {
-                applyReplacementsToSingleFile(targetFile, fileReplacements.replacements)
+                fileReplacements.filePath
             }
+            fs.canonicalize(it) == fullPathOfFileFromSarif
+        }
+        if (targetFile == null) {
+            println("Couldn't find appropriate target file on the path ${fileReplacements.filePath}, which provided in Sarif!")
+            null
+        } else {
+            applyReplacementsToSingleFile(targetFile, fileReplacements.replacements)
         }
     }
 
@@ -281,10 +276,6 @@ class SarifFixAdapter(
         }
     }
 
-
-    private fun Replacement.prettyString(): String {
-        return "(startLine: ${this.deletedRegion.startLine}, endLine: ${this.deletedRegion.endLine}, " +
-                "startColumn: ${this.deletedRegion.startColumn}, endColumn: ${this.deletedRegion.endColumn}, insertedContent: ${this.insertedContent})"
-
-    }
+    private fun Replacement.prettyString(): String = "(startLine: ${this.deletedRegion.startLine}, endLine: ${this.deletedRegion.endLine}, " +
+            "startColumn: ${this.deletedRegion.startColumn}, endColumn: ${this.deletedRegion.endColumn}, insertedContent: ${this.insertedContent})"
 }
