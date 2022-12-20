@@ -106,6 +106,38 @@ class SarifFixAdapter(
         }
     }
 
+    /**
+     * If there are several fixes in one file on the same line by different rules, take only the first one
+     *
+     * @param fileReplacementsList list of replacements by all rules
+     * @return filtered list of replacements by all rules
+     */
+    private fun filterRuleReplacements(fileReplacementsList: List<FileReplacements>): List<FileReplacements> {
+        // distinct replacements for each file by `startLine`,
+        // i.e., take only first of possible fixes for each line
+        return fileReplacementsList.map { fileReplacementsListForSingleFile ->
+            val filePath = fileReplacementsListForSingleFile.filePath
+            val distinctReplacements = fileReplacementsListForSingleFile.replacements.groupBy {
+                // group all fixes for current file by startLine
+                it.deletedRegion.startLine
+            }.flatMap { entry ->
+                val startLine = entry.key
+                val replacementsList = entry.value
+
+                if (replacementsList.size > 1) {
+                    println("Some of fixes for $filePath were ignored, due they refer to the same line: $startLine." +
+                            " Only the first fix will be applied")
+                }
+                replacementsList
+            }.distinctBy {
+                it.deletedRegion.startLine
+            }
+            FileReplacements(
+                filePath,
+                distinctReplacements
+            )
+        }
+    }
 
     /**
      * Apply fixes from single run to the target files
@@ -134,42 +166,6 @@ class SarifFixAdapter(
     }
 
     /**
-     * If there are several fixes in one file on the same line by different rules, take only the first one
-     *
-     * @param fileReplacementsList list of replacements by all rules
-     * @return filtered list of replacements by all rules
-     */
-    private fun filterRuleReplacements(fileReplacementsList: List<FileReplacements>): List<FileReplacements> {
-        // distinct replacements from all rules for each file by `startLine`,
-        // i.e., take only first of possible fixes for each line
-        return fileReplacementsList.map { fileReplacementsListForSingleFile ->
-            // since we already grouped replacements by file path, it will equal for all elements in list, can take first of them
-            val filePath = fileReplacementsListForSingleFile.filePath
-
-            val distinctReplacements = fileReplacementsListForSingleFile.replacements.groupBy {
-                // group all fixes for current file by startLine
-                it.deletedRegion.startLine
-            }.flatMap { entry ->
-                val startLine = entry.key
-                val replacementsList = entry.value
-
-                if (replacementsList.size > 1) {
-                    println("Some of fixes for $filePath were ignored, due they refer to the same line: $startLine." +
-                            " Only the first fix will be applied")
-                }
-                replacementsList
-            }
-                .distinctBy {
-                    it.deletedRegion.startLine
-                }
-            FileReplacements(
-                filePath,
-                distinctReplacements
-            )
-        }
-    }
-
-    /**
      * Create copy of the target file and apply fixes from sarif
      *
      * @param targetFile target file which need to be fixed
@@ -179,12 +175,8 @@ class SarifFixAdapter(
     @Suppress("TOO_LONG_FUNCTION")
     private fun applyReplacementsToSingleFile(targetFile: Path, replacements: List<Replacement>): Path {
         val targetFileCopy = tmpDir.resolve(targetFile.name)
-        // If file doesn't exist, fill it with original data
-        // Otherwise, that's mean, that we already made some changes to it (by other rules),
-        // so continue to work with modified file
-        if (!fs.exists(targetFileCopy)) {
-            fs.copy(targetFile, targetFileCopy)
-        }
+        fs.copy(targetFile, targetFileCopy)
+
         val fileContent = readLines(targetFileCopy).toMutableList()
 
         replacements.forEach { replacement ->
@@ -197,20 +189,7 @@ class SarifFixAdapter(
             }
             val insertedContent = replacement.insertedContent?.text
 
-            insertedContent?.let {
-                if (startColumn != null && endColumn != null) {
-                    fileContent[startLine] = fileContent[startLine].replaceRange(startColumn, endColumn, it)
-                } else {
-                    fileContent[startLine] = it
-                }
-            } ?: run {
-                if (startColumn != null && endColumn != null) {
-                    fileContent[startLine] = fileContent[startLine].removeRange(startColumn, endColumn)
-                } else {
-                    // remove all content but leave empty line, until we support https://github.com/saveourtool/sarif-utils/issues/13
-                    fileContent[startLine] = "\n"
-                }
-            }
+            applyFixToLine(fileContent, insertedContent, startLine, startColumn, endColumn)
         }
         fs.write(targetFileCopy) {
             fileContent.forEach { line ->
@@ -218,5 +197,22 @@ class SarifFixAdapter(
             }
         }
         return targetFileCopy
+    }
+}
+
+private fun applyFixToLine(fileContent: MutableList<String>, insertedContent: String?, startLine: Int, startColumn: Int?, endColumn: Int?) {
+    insertedContent?.let {
+        if (startColumn != null && endColumn != null) {
+            fileContent[startLine] = fileContent[startLine].replaceRange(startColumn, endColumn, it)
+        } else {
+            fileContent[startLine] = it
+        }
+    } ?: run {
+        if (startColumn != null && endColumn != null) {
+            fileContent[startLine] = fileContent[startLine].removeRange(startColumn, endColumn)
+        } else {
+            // remove all content but leave empty line, until we support https://github.com/saveourtool/sarif-utils/issues/13
+            fileContent[startLine] = "\n"
+        }
     }
 }
