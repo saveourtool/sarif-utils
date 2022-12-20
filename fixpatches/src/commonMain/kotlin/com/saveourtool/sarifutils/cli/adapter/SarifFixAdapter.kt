@@ -48,7 +48,10 @@ class SarifFixAdapter(
                 emptyList()
             } else {
                 val groupedReplacements = groupReplacementsByFiles(runReplacements)
-                applyReplacementsToFiles(groupedReplacements, targetFiles)
+                // if there are several fixes by different rules for the same region within one file, take only first of them
+                // and reverse the order of replacements for each file
+                val filteredRuleReplacements = filterRuleReplacements(groupedReplacements)
+                applyReplacementsToFiles(filteredRuleReplacements, targetFiles)
             }
         }
         return processedFiles.toList()
@@ -109,35 +112,6 @@ class SarifFixAdapter(
                     it.replacements
                 }
             )
-        }
-    }
-
-
-    /**
-     * Apply fixes from single run to the target files
-     *
-     * @param fileReplacementsList list of replacements from all rules
-     * @param targetFiles list of target files
-     */
-    private fun applyReplacementsToFiles(fileReplacementsList: List<FileReplacements>, targetFiles: List<Path>): List<Path> {
-        // if there are several fixes by different rules for the same region within one file, take only first of them
-        // and reverse the order of replacements for each file
-        val filteredRuleReplacements = filterRuleReplacements(fileReplacementsList)
-        return filteredRuleReplacements.mapNotNull { fileReplacements ->
-            val targetFile = targetFiles.find {
-                val fullPathOfFileFromSarif = if (!fileReplacements.filePath.adaptedIsAbsolute()) {
-                    fs.canonicalize(sarifFile.parent!! / fileReplacements.filePath)
-                } else {
-                    fileReplacements.filePath
-                }
-                fs.canonicalize(it) == fullPathOfFileFromSarif
-            }
-            if (targetFile == null) {
-                println("Couldn't find appropriate target file on the path ${fileReplacements.filePath}, which provided in Sarif!")
-                null
-            } else {
-                applyReplacementsToSingleFile(targetFile, fileReplacements.replacements)
-            }
         }
     }
 
@@ -214,6 +188,31 @@ class SarifFixAdapter(
             }
         }
         return nonOverlappingFixes
+    }
+
+    /**
+     * Apply fixes from single run to the target files
+     *
+     * @param fileReplacementsList list of replacements from all rules
+     * @param targetFiles list of target files
+     */
+    private fun applyReplacementsToFiles(fileReplacementsList: List<FileReplacements>, targetFiles: List<Path>): List<Path> {
+        return fileReplacementsList.mapNotNull { fileReplacements ->
+            val targetFile = targetFiles.find {
+                val fullPathOfFileFromSarif = if (!fileReplacements.filePath.adaptedIsAbsolute()) {
+                    fs.canonicalize(sarifFile.parent!! / fileReplacements.filePath)
+                } else {
+                    fileReplacements.filePath
+                }
+                fs.canonicalize(it) == fullPathOfFileFromSarif
+            }
+            if (targetFile == null) {
+                println("Couldn't find appropriate target file on the path ${fileReplacements.filePath}, which provided in Sarif!")
+                null
+            } else {
+                applyReplacementsToSingleFile(targetFile, fileReplacements.replacements)
+            }
+        }
     }
 
     /**
