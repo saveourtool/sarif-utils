@@ -44,10 +44,11 @@ class SarifFixAdapter(
         val processedFiles = sarifSchema210.runs.asSequence().flatMapIndexed { index, run ->
             val runReplacements: List<RuleReplacements> = extractFixObjects(run)
             if (runReplacements.isEmpty()) {
-                println("Run #$index have no `fix object` section!")
+                println("Run #$index have no any `fix object` section!")
                 emptyList()
             } else {
-                applyReplacementsToFiles(runReplacements, targetFiles)
+                val groupedReplacements = groupReplacementsByFiles(runReplacements)
+                applyReplacementsToFiles(groupedReplacements, targetFiles)
             }
         }
         return processedFiles.toList()
@@ -89,14 +90,71 @@ class SarifFixAdapter(
     }
 
     /**
+     * Group all replacements from all rules by file name
+     *
+     * @param runReplacements list of replacements by all rules
+     * @return list of [FileReplacements], where [replacements] field contain replacements from all rules
+     */
+    private fun groupReplacementsByFiles(runReplacements: List<RuleReplacements>): List<FileReplacements> {
+        // flat replacements by all rules into single list and group by file path
+        return runReplacements.flatten().groupBy { fileReplacements ->
+            fileReplacements.filePath
+        }.map { entry ->
+            // now collect all replacements by all rules for each file into single instance of `FileReplacements`
+            val filePath = entry.key
+            val fileReplacements = entry.value
+            FileReplacements(
+                filePath,
+                fileReplacements.flatMap {
+                    it.replacements
+                }
+            )
+        }
+    }
+
+    /**
+     * If there are several fixes in one file on the same line by different rules, take only the first one
+     *
+     * @param fileReplacementsList list of replacements by all rules
+     * @return filtered list of replacements by all rules
+     */
+    private fun filterRuleReplacements(fileReplacementsList: List<FileReplacements>): List<FileReplacements> {
+        // distinct replacements for each file by `startLine`,
+        // i.e., take only first of possible fixes for each line
+        return fileReplacementsList.map { fileReplacementsListForSingleFile ->
+            val filePath = fileReplacementsListForSingleFile.filePath
+            val distinctReplacements = fileReplacementsListForSingleFile.replacements.groupBy {
+                // group all fixes for current file by startLine
+                it.deletedRegion.startLine
+            }.flatMap { entry ->
+                val startLine = entry.key
+                val replacementsList = entry.value
+
+                if (replacementsList.size > 1) {
+                    println("Some of fixes for $filePath were ignored, due they refer to the same line: $startLine." +
+                            " Only the first fix will be applied")
+                }
+                replacementsList
+            }.distinctBy {
+                it.deletedRegion.startLine
+            }
+            FileReplacements(
+                filePath,
+                distinctReplacements
+            )
+        }
+    }
+
+    /**
      * Apply fixes from single run to the target files
      *
-     * @param runReplacements list of replacements from all rules
+     * @param fileReplacementsList list of replacements from all rules
      * @param targetFiles list of target files
      */
-    private fun applyReplacementsToFiles(runReplacements: List<RuleReplacements>, targetFiles: List<Path>): List<Path> = runReplacements.flatMap { ruleReplacements ->
-        val filteredRuleReplacements = filterRuleReplacements(ruleReplacements)
-        filteredRuleReplacements.mapNotNull { fileReplacements ->
+    private fun applyReplacementsToFiles(fileReplacementsList: List<FileReplacements>, targetFiles: List<Path>): List<Path> {
+        // if there are several fixes by different rules on the same line for any file, take only first of them
+        val filteredRuleReplacements = filterRuleReplacements(fileReplacementsList)
+        return filteredRuleReplacements.mapNotNull { fileReplacements ->
             val targetFile = targetFiles.find {
                 val fullPathOfFileFromSarif = if (!fileReplacements.filePath.adaptedIsAbsolute()) {
                     fs.canonicalize(sarifFile.parent!! / fileReplacements.filePath)
@@ -115,50 +173,6 @@ class SarifFixAdapter(
     }
 
     /**
-     * If there are several fixes in one file on the same line by different rules, take only the first one
-     *
-     * @param ruleReplacements list of replacements by all rules
-     * @return filtered list of replacements by all rules
-     */
-    private fun filterRuleReplacements(ruleReplacements: RuleReplacements): RuleReplacements {
-        // group replacements for each file by all rules
-        val listOfAllReplacementsForEachFile = ruleReplacements.groupBy { fileReplacement ->
-            fileReplacement.filePath.toString()
-        }.values
-
-        // distinct replacements from all rules for each file by `startLine`,
-        // i.e., take only first of possible fixes for each line
-        return listOfAllReplacementsForEachFile.map { fileReplacementsListForSingleFile ->
-            // since we already grouped replacements by file path, it will equal for all elements in list, can take first of them
-            val filePath = fileReplacementsListForSingleFile.first().filePath
-
-            val distinctReplacements = fileReplacementsListForSingleFile.flatMap { fileReplacements ->
-                // map fixes from different rules into single list
-                fileReplacements.replacements
-            }.groupBy {
-                // group all fixes for current file by startLine
-                it.deletedRegion.startLine
-            }.flatMap { entry ->
-                val startLine = entry.key
-                val replacementsList = entry.value
-
-                if (replacementsList.size > 1) {
-                    println("Some of fixes for $filePath were ignored, due they refer to the same line: $startLine." +
-                            " Only the first fix will be applied")
-                }
-                replacementsList
-            }
-                .distinctBy {
-                    it.deletedRegion.startLine
-                }
-            FileReplacements(
-                filePath,
-                distinctReplacements
-            )
-        }
-    }
-
-    /**
      * Create copy of the target file and apply fixes from sarif
      *
      * @param targetFile target file which need to be fixed
@@ -168,12 +182,8 @@ class SarifFixAdapter(
     @Suppress("TOO_LONG_FUNCTION")
     private fun applyReplacementsToSingleFile(targetFile: Path, replacements: List<Replacement>): Path {
         val targetFileCopy = tmpDir.resolve(targetFile.name)
-        // If file doesn't exist, fill it with original data
-        // Otherwise, that's mean, that we already made some changes to it (by other rules),
-        // so continue to work with modified file
-        if (!fs.exists(targetFileCopy)) {
-            fs.copy(targetFile, targetFileCopy)
-        }
+        fs.copy(targetFile, targetFileCopy)
+
         val fileContent = readLines(targetFileCopy).toMutableList()
 
         replacements.forEach { replacement ->
@@ -186,20 +196,7 @@ class SarifFixAdapter(
             }
             val insertedContent = replacement.insertedContent?.text
 
-            insertedContent?.let {
-                if (startColumn != null && endColumn != null) {
-                    fileContent[startLine] = fileContent[startLine].replaceRange(startColumn, endColumn, it)
-                } else {
-                    fileContent[startLine] = it
-                }
-            } ?: run {
-                if (startColumn != null && endColumn != null) {
-                    fileContent[startLine] = fileContent[startLine].removeRange(startColumn, endColumn)
-                } else {
-                    // remove all content but leave empty line, until we support https://github.com/saveourtool/sarif-utils/issues/13
-                    fileContent[startLine] = "\n"
-                }
-            }
+            applyFixToLine(fileContent, insertedContent, startLine, startColumn, endColumn)
         }
         fs.write(targetFileCopy) {
             fileContent.forEach { line ->
@@ -207,5 +204,37 @@ class SarifFixAdapter(
             }
         }
         return targetFileCopy
+    }
+
+    /**
+     * Apply single line fixes into [fileContent]
+     *
+     * @param fileContent file data, where need to change content
+     * @param insertedContent represents inserted content into the line from [fileContent] with index [startLine], or null if fix represent the deletion of region
+     * @param startLine index of line, which need to be changed
+     * @param startColumn index of column, starting from which content should be changed, or null if [startLine] will be completely replaced
+     * @param endColumn index of column, ending with which content should be changed, or null if [startLine] will be completely replaced
+     */
+    private fun applyFixToLine(
+        fileContent: MutableList<String>,
+        insertedContent: String?,
+        startLine: Int,
+        startColumn: Int?,
+        endColumn: Int?
+    ) {
+        insertedContent?.let {
+            if (startColumn != null && endColumn != null) {
+                fileContent[startLine] = fileContent[startLine].replaceRange(startColumn, endColumn, it)
+            } else {
+                fileContent[startLine] = it
+            }
+        } ?: run {
+            if (startColumn != null && endColumn != null) {
+                fileContent[startLine] = fileContent[startLine].removeRange(startColumn, endColumn)
+            } else {
+                // remove all content but leave empty line, until we support https://github.com/saveourtool/sarif-utils/issues/13
+                fileContent[startLine] = "\n"
+            }
+        }
     }
 }
