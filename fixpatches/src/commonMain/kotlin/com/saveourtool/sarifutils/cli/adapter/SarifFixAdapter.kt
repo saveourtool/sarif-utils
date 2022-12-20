@@ -152,23 +152,24 @@ class SarifFixAdapter(
      * @param targetFiles list of target files
      */
     private fun applyReplacementsToFiles(fileReplacementsList: List<FileReplacements>, targetFiles: List<Path>): List<Path> {
-            val filteredRuleReplacements = filterRuleReplacements(fileReplacementsList)
-            return filteredRuleReplacements.mapNotNull { fileReplacements ->
-                val targetFile = targetFiles.find {
-                    val fullPathOfFileFromSarif = if (!fileReplacements.filePath.adaptedIsAbsolute()) {
-                        fs.canonicalize(sarifFile.parent!! / fileReplacements.filePath)
-                    } else {
-                        fileReplacements.filePath
-                    }
-                    fs.canonicalize(it) == fullPathOfFileFromSarif
-                }
-                if (targetFile == null) {
-                    println("Couldn't find appropriate target file on the path ${fileReplacements.filePath}, which provided in Sarif!")
-                    null
+        // if there are several fixes by different rules on the same line for any file, take only first of them
+        val filteredRuleReplacements = filterRuleReplacements(fileReplacementsList)
+        return filteredRuleReplacements.mapNotNull { fileReplacements ->
+            val targetFile = targetFiles.find {
+                val fullPathOfFileFromSarif = if (!fileReplacements.filePath.adaptedIsAbsolute()) {
+                    fs.canonicalize(sarifFile.parent!! / fileReplacements.filePath)
                 } else {
-                    applyReplacementsToSingleFile(targetFile, fileReplacements.replacements)
+                    fileReplacements.filePath
                 }
+                fs.canonicalize(it) == fullPathOfFileFromSarif
             }
+            if (targetFile == null) {
+                println("Couldn't find appropriate target file on the path ${fileReplacements.filePath}, which provided in Sarif!")
+                null
+            } else {
+                applyReplacementsToSingleFile(targetFile, fileReplacements.replacements)
+            }
+        }
     }
 
     /**
@@ -214,7 +215,13 @@ class SarifFixAdapter(
      * @param startColumn index of column, starting from which content should be changed, or null if [startLine] will be completely replaced
      * @param endColumn index of column, ending with which content should be changed, or null if [startLine] will be completely replaced
      */
-    private fun applyFixToLine(fileContent: MutableList<String>, insertedContent: String?, startLine: Int, startColumn: Int?, endColumn: Int?) {
+    private fun applyFixToLine(
+        fileContent: MutableList<String>,
+        insertedContent: String?,
+        startLine: Int,
+        startColumn: Int?,
+        endColumn: Int?
+    ) {
         insertedContent?.let {
             if (startColumn != null && endColumn != null) {
                 fileContent[startLine] = fileContent[startLine].replaceRange(startColumn, endColumn, it)
