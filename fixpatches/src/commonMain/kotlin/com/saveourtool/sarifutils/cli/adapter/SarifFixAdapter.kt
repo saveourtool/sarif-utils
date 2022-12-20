@@ -44,10 +44,11 @@ class SarifFixAdapter(
         val processedFiles = sarifSchema210.runs.asSequence().flatMapIndexed { index, run ->
             val runReplacements: List<RuleReplacements> = extractFixObjects(run)
             if (runReplacements.isEmpty()) {
-                println("Run #$index have no `fix object` section!")
+                println("Run #$index have no any `fix object` section!")
                 emptyList()
             } else {
-                applyReplacementsToFiles(runReplacements, targetFiles)
+                val groupedReplacements = groupReplacementsByFiles(runReplacements)
+                applyReplacementsToFiles(groupedReplacements, targetFiles)
             }
         }
         return processedFiles.toList()
@@ -88,54 +89,64 @@ class SarifFixAdapter(
             ?.toList() ?: emptyList()
     }
 
+    private fun groupReplacementsByFiles(runReplacements: List<RuleReplacements>): List<FileReplacements> {
+        // flat replacements by all rules into single list and group by file path
+        return runReplacements.flatten().groupBy { fileReplacements ->
+            fileReplacements.filePath
+        }.map { entry ->
+            // now collect all replacements by all rules for each file into single instance of `FileReplacements`
+            val filePath = entry.key
+            val fileReplacements = entry.value
+            FileReplacements(
+                filePath,
+                fileReplacements.flatMap {
+                    it.replacements
+                }
+            )
+        }
+    }
+
+
     /**
      * Apply fixes from single run to the target files
      *
-     * @param runReplacements list of replacements from all rules
+     * @param fileReplacementsList list of replacements from all rules
      * @param targetFiles list of target files
      */
-    private fun applyReplacementsToFiles(runReplacements: List<RuleReplacements>, targetFiles: List<Path>): List<Path> = runReplacements.flatMap { ruleReplacements ->
-        val filteredRuleReplacements = filterRuleReplacements(ruleReplacements)
-        filteredRuleReplacements.mapNotNull { fileReplacements ->
-            val targetFile = targetFiles.find {
-                val fullPathOfFileFromSarif = if (!fileReplacements.filePath.adaptedIsAbsolute()) {
-                    fs.canonicalize(sarifFile.parent!! / fileReplacements.filePath)
-                } else {
-                    fileReplacements.filePath
+    private fun applyReplacementsToFiles(fileReplacementsList: List<FileReplacements>, targetFiles: List<Path>): List<Path> {
+            val filteredRuleReplacements = filterRuleReplacements(fileReplacementsList)
+            return filteredRuleReplacements.mapNotNull { fileReplacements ->
+                val targetFile = targetFiles.find {
+                    val fullPathOfFileFromSarif = if (!fileReplacements.filePath.adaptedIsAbsolute()) {
+                        fs.canonicalize(sarifFile.parent!! / fileReplacements.filePath)
+                    } else {
+                        fileReplacements.filePath
+                    }
+                    fs.canonicalize(it) == fullPathOfFileFromSarif
                 }
-                fs.canonicalize(it) == fullPathOfFileFromSarif
+                if (targetFile == null) {
+                    println("Couldn't find appropriate target file on the path ${fileReplacements.filePath}, which provided in Sarif!")
+                    null
+                } else {
+                    applyReplacementsToSingleFile(targetFile, fileReplacements.replacements)
+                }
             }
-            if (targetFile == null) {
-                println("Couldn't find appropriate target file on the path ${fileReplacements.filePath}, which provided in Sarif!")
-                null
-            } else {
-                applyReplacementsToSingleFile(targetFile, fileReplacements.replacements)
-            }
-        }
     }
 
     /**
      * If there are several fixes in one file on the same line by different rules, take only the first one
      *
-     * @param ruleReplacements list of replacements by all rules
+     * @param fileReplacementsList list of replacements by all rules
      * @return filtered list of replacements by all rules
      */
-    private fun filterRuleReplacements(ruleReplacements: RuleReplacements): RuleReplacements {
-        // group replacements for each file by all rules
-        val listOfAllReplacementsForEachFile = ruleReplacements.groupBy { fileReplacement ->
-            fileReplacement.filePath.toString()
-        }.values
-
+    private fun filterRuleReplacements(fileReplacementsList: List<FileReplacements>): List<FileReplacements> {
         // distinct replacements from all rules for each file by `startLine`,
         // i.e., take only first of possible fixes for each line
-        return listOfAllReplacementsForEachFile.map { fileReplacementsListForSingleFile ->
+        return fileReplacementsList.map { fileReplacementsListForSingleFile ->
             // since we already grouped replacements by file path, it will equal for all elements in list, can take first of them
-            val filePath = fileReplacementsListForSingleFile.first().filePath
+            val filePath = fileReplacementsListForSingleFile.filePath
 
-            val distinctReplacements = fileReplacementsListForSingleFile.flatMap { fileReplacements ->
-                // map fixes from different rules into single list
-                fileReplacements.replacements
-            }.groupBy {
+            val distinctReplacements = fileReplacementsListForSingleFile.replacements.groupBy {
                 // group all fixes for current file by startLine
                 it.deletedRegion.startLine
             }.flatMap { entry ->
