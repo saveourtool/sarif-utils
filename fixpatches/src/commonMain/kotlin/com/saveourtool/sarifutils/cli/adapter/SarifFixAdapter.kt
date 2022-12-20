@@ -89,6 +89,12 @@ class SarifFixAdapter(
             ?.toList() ?: emptyList()
     }
 
+    /**
+     * Group all replacements from all rules by file name
+     *
+     * @param runReplacements list of replacements by all rules
+     * @return list of [FileReplacements], where [replacements] field contain replacements from all rules
+     */
     private fun groupReplacementsByFiles(runReplacements: List<RuleReplacements>): List<FileReplacements> {
         // flat replacements by all rules into single list and group by file path
         return runReplacements.flatten().groupBy { fileReplacements ->
@@ -198,21 +204,30 @@ class SarifFixAdapter(
         }
         return targetFileCopy
     }
-}
 
-private fun applyFixToLine(fileContent: MutableList<String>, insertedContent: String?, startLine: Int, startColumn: Int?, endColumn: Int?) {
-    insertedContent?.let {
-        if (startColumn != null && endColumn != null) {
-            fileContent[startLine] = fileContent[startLine].replaceRange(startColumn, endColumn, it)
-        } else {
-            fileContent[startLine] = it
-        }
-    } ?: run {
-        if (startColumn != null && endColumn != null) {
-            fileContent[startLine] = fileContent[startLine].removeRange(startColumn, endColumn)
-        } else {
-            // remove all content but leave empty line, until we support https://github.com/saveourtool/sarif-utils/issues/13
-            fileContent[startLine] = "\n"
+    /**
+     * Apply single line fixes into [fileContent]
+     *
+     * @param fileContent file data, where need to change content
+     * @param insertedContent represents inserted content into the line from [fileContent] with index [startLine], or null if fix represent the deletion of region
+     * @param startLine index of line, which need to be changed
+     * @param startColumn index of column, starting from which content should be changed, or null if [startLine] will be completely replaced
+     * @param endColumn index of column, ending with which content should be changed, or null if [startLine] will be completely replaced
+     */
+    private fun applyFixToLine(fileContent: MutableList<String>, insertedContent: String?, startLine: Int, startColumn: Int?, endColumn: Int?) {
+        insertedContent?.let {
+            if (startColumn != null && endColumn != null) {
+                fileContent[startLine] = fileContent[startLine].replaceRange(startColumn, endColumn, it)
+            } else {
+                fileContent[startLine] = it
+            }
+        } ?: run {
+            if (startColumn != null && endColumn != null) {
+                fileContent[startLine] = fileContent[startLine].removeRange(startColumn, endColumn)
+            } else {
+                // remove all content but leave empty line, until we support https://github.com/saveourtool/sarif-utils/issues/13
+                fileContent[startLine] = "\n"
+            }
         }
     }
 }
