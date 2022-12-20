@@ -112,60 +112,6 @@ class SarifFixAdapter(
         }
     }
 
-    /**
-     * If there are several fixes in one file on the same line by different rules, take only the first one
-     *
-     * @param fileReplacementsList list of replacements by all rules
-     * @return filtered list of replacements by all rules
-     */
-    private fun filterRuleReplacements(fileReplacementsList: List<FileReplacements>): List<FileReplacements> {
-        // distinct replacements for each file by `startLine`,
-        // i.e., take only first of possible fixes for each line
-        return fileReplacementsList.map { fileReplacementsListForSingleFile ->
-            val filePath = fileReplacementsListForSingleFile.filePath
-            val sortedReplacements = fileReplacementsListForSingleFile.replacements.map { replacement ->
-                if (replacement.deletedRegion.endLine == null) {
-                    val deletedRegion = replacement.deletedRegion.copy(
-                        endLine = replacement.deletedRegion.startLine
-                    )
-                    replacement.copy(
-                        deletedRegion = deletedRegion
-                    )
-                } else {
-                    replacement
-                }
-            }.sortedWith(
-                compareBy( { it.deletedRegion.startLine }, {it.deletedRegion.endLine})
-            )
-            println("==========> ${sortedReplacements}")
-            val nonOverlapingFixes = getNonOverlapingReplacements(fileReplacementsListForSingleFile.filePath, sortedReplacements)
-
-            println("------------------> ${nonOverlapingFixes}")
-
-            FileReplacements(
-                filePath,
-                nonOverlapingFixes.reversed()
-            )
-        }
-    }
-
-    private fun getNonOverlapingReplacements(filePath: Path, sortedReplacements: List<Replacement>): MutableList<Replacement> {
-        val nonOverlapingFixes: MutableList<Replacement> = mutableListOf(sortedReplacements[0])
-        var currentEndLine = sortedReplacements[0].deletedRegion.endLine!!
-
-        for (i in 1 until sortedReplacements.size) {
-            if (sortedReplacements[i].deletedRegion.startLine!! <= currentEndLine) {
-                println("Fix ${sortedReplacements[i].prettyString()} for $filePath was ignored, due it overlaps with others." +
-                        " Only the first fix for this region will be applied.")
-            }
-            else {
-                nonOverlapingFixes.add(sortedReplacements[i])
-                currentEndLine = sortedReplacements[i].deletedRegion.endLine!!
-            }
-        }
-        return nonOverlapingFixes
-    }
-
 
     /**
      * Apply fixes from single run to the target files
@@ -174,7 +120,8 @@ class SarifFixAdapter(
      * @param targetFiles list of target files
      */
     private fun applyReplacementsToFiles(fileReplacementsList: List<FileReplacements>, targetFiles: List<Path>): List<Path> {
-        // if there are several fixes by different rules on the same line for any file, take only first of them
+        // if there are several fixes by different rules for the same region within one file, take only first of them
+        // and reverse the order of replacements for each file
         val filteredRuleReplacements = filterRuleReplacements(fileReplacementsList)
         return filteredRuleReplacements.mapNotNull { fileReplacements ->
             val targetFile = targetFiles.find {
@@ -192,6 +139,70 @@ class SarifFixAdapter(
                 applyReplacementsToSingleFile(targetFile, fileReplacements.replacements)
             }
         }
+    }
+
+    /**
+     * If there are several fixes in one file for the same region by different rules, take only the first one,
+     * also return filtered replacements in reverse order, in aim to provide fixes on the next stages without invalidation of indexes,
+     * i.e. in case of multiline fixes, which will add new lines, or remove regions, that is, shift all the lines below,
+     * apply all fixes, starting from the last fix, thus it won't break startLine's and endLine's for other fixes
+     *
+     * @param fileReplacementsList list of replacements by all rules
+     * @return filtered list of replacements by all rules
+     */
+    private fun filterRuleReplacements(fileReplacementsList: List<FileReplacements>): List<FileReplacements> {
+        return fileReplacementsList.map { fileReplacementsListForSingleFile ->
+            val filePath = fileReplacementsListForSingleFile.filePath
+            // sort replacements by startLine
+            val sortedReplacements = fileReplacementsListForSingleFile.replacements.map { replacement ->
+                if (replacement.deletedRegion.endLine == null) {
+                    val deletedRegion = replacement.deletedRegion.copy(
+                        endLine = replacement.deletedRegion.startLine
+                    )
+                    replacement.copy(
+                        deletedRegion = deletedRegion
+                    )
+                } else {
+                    replacement
+                }
+            }.sortedWith(
+                compareBy( { it.deletedRegion.startLine }, {it.deletedRegion.endLine})
+            )
+            // now, from overlapping fixes, take only the first one
+            val nonOverlappingFixes = getNonOverlappingReplacements(fileReplacementsListForSingleFile.filePath, sortedReplacements)
+
+            // save replacements in reverse order
+            FileReplacements(
+                filePath,
+                nonOverlappingFixes.reversed()
+            )
+        }
+    }
+
+    /**
+     * For the [sortedReplacements] list take only non overlapping replacements.
+     * Replacement overlaps, if they are fix the same region, e.g: max(fix1.startLine, fix2.startLine) <= min(fix1.endLine, fix2.endLine),
+     * or, for sorted intervals by startLine it's equals to (fix2.startLine <= fix1.endLine)
+     *
+     * @param filePath file path
+     * @param sortedReplacements list of replacements, sorted by [startLine]
+     * @return list of non overlapping replacements
+     */
+    private fun getNonOverlappingReplacements(filePath: Path, sortedReplacements: List<Replacement>): MutableList<Replacement> {
+        val nonOverlappingFixes: MutableList<Replacement> = mutableListOf(sortedReplacements[0])
+        var currentEndLine = sortedReplacements[0].deletedRegion.endLine!!
+
+        for (i in 1 until sortedReplacements.size) {
+            if (sortedReplacements[i].deletedRegion.startLine!! <= currentEndLine) {
+                println("Fix ${sortedReplacements[i].prettyString()} for $filePath was ignored, due it overlaps with others." +
+                        " Only the first fix for this region will be applied.")
+            }
+            else {
+                nonOverlappingFixes.add(sortedReplacements[i])
+                currentEndLine = sortedReplacements[i].deletedRegion.endLine!!
+            }
+        }
+        return nonOverlappingFixes
     }
 
     /**
