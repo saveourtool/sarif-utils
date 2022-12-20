@@ -154,29 +154,40 @@ class SarifFixAdapter(
         return fileReplacementsList.map { fileReplacementsListForSingleFile ->
             val filePath = fileReplacementsListForSingleFile.filePath
             // sort replacements by startLine
-            val sortedReplacements = fileReplacementsListForSingleFile.replacements.map { replacement ->
-                if (replacement.deletedRegion.endLine == null) {
-                    val deletedRegion = replacement.deletedRegion.copy(
-                        endLine = replacement.deletedRegion.startLine
-                    )
-                    replacement.copy(
-                        deletedRegion = deletedRegion
-                    )
-                } else {
-                    replacement
-                }
-            }.sortedWith(
-                compareBy( { it.deletedRegion.startLine }, {it.deletedRegion.endLine})
-            )
+            val sortedReplacements = sortReplacementsByStartLine(fileReplacementsListForSingleFile)
             // now, from overlapping fixes, take only the first one
             val nonOverlappingFixes = getNonOverlappingReplacements(fileReplacementsListForSingleFile.filePath, sortedReplacements)
-
             // save replacements in reverse order
             FileReplacements(
                 filePath,
                 nonOverlappingFixes.reversed()
             )
         }
+    }
+
+    /**
+     * Sort provided list of replacements by [startLine]
+     *
+     * @param fileReplacementsListForSingleFile list of replacements for target file
+     * @return sorted list of replacements by [startLine]
+     */
+    private fun sortReplacementsByStartLine(fileReplacementsListForSingleFile: FileReplacements): List<Replacement> {
+        return fileReplacementsListForSingleFile.replacements.map { replacement ->
+            // it's not require to present endLine, if fix represents the single line changes,
+            // however, for consistency we will set it anyway
+            if (replacement.deletedRegion.endLine == null) {
+                val deletedRegion = replacement.deletedRegion.copy(
+                    endLine = replacement.deletedRegion.startLine
+                )
+                replacement.copy(
+                    deletedRegion = deletedRegion
+                )
+            } else {
+                replacement
+            }
+        }.sortedWith(
+            compareBy( { it.deletedRegion.startLine }, {it.deletedRegion.endLine})
+        )
     }
 
     /**
