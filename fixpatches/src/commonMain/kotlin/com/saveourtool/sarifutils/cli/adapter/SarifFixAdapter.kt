@@ -160,22 +160,20 @@ class SarifFixAdapter(
      * @param replacement replacement instance, with probably missing [endLine] field
      * @return updated replacement, with filled [endLine], if it was absent
      */
-    private fun recoverEndLine(replacement: Replacement): Replacement {
-        return if (replacement.deletedRegion.endLine == null) {
-            // count the number of lines in inserted text
-            val linesNumber = replacement.insertedContent?.text?.countLines() ?: 1
-            // calculate shift from startLine, if linesNumber = 1 => endLine equals startLine, and shift is 0
-            // else shift = linesNumber - 1 and endLine = startLine + shift
-            val shiftFromStartLine = linesNumber - 1
-            val deletedRegion = replacement.deletedRegion.copy(
-                endLine = replacement.deletedRegion.startLine!! + shiftFromStartLine
-            )
-            replacement.copy(
-                deletedRegion = deletedRegion
-            )
-        } else {
-            replacement
-        }
+    private fun recoverEndLine(replacement: Replacement): Replacement = if (replacement.deletedRegion.endLine == null) {
+        // count the number of lines in inserted text
+        val linesNumber = replacement.insertedContent?.text?.countLines() ?: 1
+        // calculate shift from startLine, if linesNumber = 1 => endLine equals startLine, and shift is 0
+        // else shift = linesNumber - 1 and endLine = startLine + shift
+        val shiftFromStartLine = linesNumber - 1
+        val deletedRegion = replacement.deletedRegion.copy(
+            endLine = replacement.deletedRegion.startLine!! + shiftFromStartLine
+        )
+        replacement.copy(
+            deletedRegion = deletedRegion
+        )
+    } else {
+        replacement
     }
 
     /**
@@ -265,11 +263,14 @@ class SarifFixAdapter(
      * Apply fixes into [fileContent]
      *
      * @param fileContent file data, where need to change content
-     * @param insertedContent represents inserted content into the line from [fileContent] with index [startLine], or null if fix represent the deletion of region
-     * @param startLine index of line, which need to be changed
-     * @param startColumn index of column, starting from which content should be changed, or null if [startLine] will be completely replaced
-     * @param endColumn index of column, ending with which content should be changed, or null if [startLine] will be completely replaced
+     * @param insertedContent represents inserted content for the [fileContent] starting with line [startLine] and ending with [endLine],
+     * or null if fix represent the deletion of region
+     * @param startLine start index of line, which need to be changed
+     * @param endLine end index of line, which need to be changed
+     * @param startColumn index of column, starting from which content should be changed, or null if range ([startLine], [endLine]) will be completely replaced
+     * @param endColumn index of column, ending with which content should be changed, or null if range ([startLine], [endLine]) will be completely replaced
      */
+    @Suppress("TOO_MANY_PARAMETERS")
     private fun applyFix(
         fileContent: MutableList<String>,
         insertedContent: String?,
@@ -285,10 +286,9 @@ class SarifFixAdapter(
             // single line fix
             applySingleLineFix(fileContent, insertedContent, startLine, startColumn, endColumn)
         }
-
-
     }
 
+    @Suppress("TOO_MANY_PARAMETERS")
     private fun applyMultiLineFix(
         fileContent: MutableList<String>,
         insertedContent: String?,
@@ -297,16 +297,20 @@ class SarifFixAdapter(
         startColumn: Int?,
         endColumn: Int?
     ) {
-        insertedContent?.let {
+        insertedContent?.let { content ->
             if (startColumn != null && endColumn != null) {
+                // first, remove changeable region
                 removeMultiLineRange(fileContent, startLine, endLine, startColumn, endColumn)
-                fileContent[startLine] = StringBuilder(fileContent[startLine]).apply { insert(startColumn, it) }.toString()
+                // insertedContent already contains newlines, so could be inserted simply starting from startLine
+                fileContent[startLine] = StringBuilder(fileContent[startLine]).apply { insert(startColumn, content) }.toString()
             } else {
+                // remove whole changeable region
                 removeMultiLines(fileContent, startLine, endLine)
                 // insertedContent already contains newlines, so could be inserted simply starting from startLine
-                fileContent.add(startLine, it)
+                fileContent.add(startLine, content)
             }
         } ?: run {
+            // just remove changeable region
             if (startColumn != null && endColumn != null) {
                 removeMultiLineRange(fileContent, startLine, endLine, startColumn, endColumn)
             } else {
@@ -329,7 +333,7 @@ class SarifFixAdapter(
             fileContent.removeAt(line)
         }
         // remove characters in endLine before endColumn
-        fileContent[endLine].removeRange(0 , endColumn)
+        fileContent[endLine].removeRange(0, endColumn)
     }
 
     private fun removeMultiLines(
@@ -337,8 +341,8 @@ class SarifFixAdapter(
         startLine: Int,
         endLine: Int,
     ) {
-        // whole range (startLine, endLine) is changed
-        for (line in startLine.. endLine) {
+        // remove whole range (startLine, endLine)
+        for (line in startLine..endLine) {
             fileContent.removeAt(line)
         }
     }
@@ -350,13 +354,13 @@ class SarifFixAdapter(
         startColumn: Int?,
         endColumn: Int?
     ) {
-        insertedContent?.let {
+        insertedContent?.let { content ->
             if (startColumn != null && endColumn != null) {
                 // replace range
-                fileContent[startLine] = fileContent[startLine].replaceRange(startColumn, endColumn, it)
+                fileContent[startLine] = fileContent[startLine].replaceRange(startColumn, endColumn, content)
             } else {
                 // replace whole line
-                fileContent[startLine] = it
+                fileContent[startLine] = content
             }
         } ?: run {
             if (startColumn != null && endColumn != null) {
