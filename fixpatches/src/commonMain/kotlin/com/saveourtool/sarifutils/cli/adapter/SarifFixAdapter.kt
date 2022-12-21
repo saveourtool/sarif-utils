@@ -19,6 +19,7 @@ import okio.Path.Companion.toPath
 
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlin.math.min
 
 /**
  * Adapter for applying sarif fix object replacements to the corresponding target files
@@ -281,6 +282,7 @@ class SarifFixAdapter(
         startColumn: Int?,
         endColumn: Int?
     ) {
+        println("----------------FIX startLine ${startLine} endLine ${endLine} startColumn ${startColumn} endColumn $endColumn")
         if (startLine != endLine) {
             // multiline fix
             applyMultiLineFix(fileContent, insertedContent, startLine, endLine, startColumn, endColumn)
@@ -330,10 +332,12 @@ class SarifFixAdapter(
     ) {
         // remove characters in startLine after startColumn
         fileContent[startLine] = fileContent[startLine].removeRange(startColumn, fileContent[startLine].length)
+        // TODO
         // remove lines between startLine and endLine
-        fileContent.subList(startLine + 1, endLine - 1).clear()
+        fileContent.subList(startLine + 1, min(fileContent.size, endLine)).clear()
         // remove characters in endLine before endColumn
-        fileContent[endLine].removeRange(0, endColumn)
+        // TODO
+        fileContent[min(fileContent.size - 1, endLine)].removeRange(0, min(endColumn, fileContent[min(fileContent.size - 1, endLine)].length))
     }
 
     private fun removeMultiLines(
@@ -342,7 +346,8 @@ class SarifFixAdapter(
         endLine: Int,
     ) {
         // remove whole range (startLine, endLine)
-        fileContent.subList(startLine, endLine).clear()
+        // TODO
+        fileContent.subList(startLine, min(fileContent.size, endLine + 1)).clear()
     }
 
     private fun applySingleLineFix(

@@ -462,6 +462,32 @@ class SarifFixAdapterTest {
         assertEquals(expectedDelta, diff.trimIndent())
     }
 
+    @Test
+    fun `sarif multiline fix 3`() {
+        val sarifFilePath = "src/commonTest/resources/sarif-multiline-fixes-3.sarif".toPath()
+        val testFile = "src/commonTest/resources/src/kotlin/EnumValueSnakeCaseTest.kt".toPath()
+
+        val sarifFixAdapter = SarifFixAdapter(
+            sarifFile = sarifFilePath,
+            targetFiles = listOf(testFile)
+        )
+
+        val processedFile = sarifFixAdapter.process().first()
+
+        val diff = calculateDiff(testFile, processedFile)
+
+        val expectedDelta =
+            """
+                ChangeDelta, position 8, lines:
+                -    NAme[_]M[Y]a[_s]ayR[_]
+                +    NAmeM<y>a<S>ayR
+                
+                InsertDelta(source=[position: 10, size: 0, lines: []], target=[position: 10, size: 1, lines: [// comment]])
+                """.trimIndent()
+
+        assertEquals(expectedDelta, diff.trimIndent())
+    }
+
     @Suppress("TOO_MANY_PARAMETERS")
     private fun compareDeletedRegion(
         changes: Replacement,
