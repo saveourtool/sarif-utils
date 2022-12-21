@@ -268,13 +268,24 @@ class SarifFixAdapter(
         startColumn: Int?,
         endColumn: Int?
     ) {
-        if (startLine != endLine || insertedContent.isMultiline()) {
+        if (startLine != endLine) {
             // multiline fix
             insertedContent?.let {
                 if (startColumn != null && endColumn != null) {
-                    fileContent[startLine] = fileContent[startLine].replaceRange(startColumn, endColumn, it)
+                    // remove characters in startLine after startColumn
+                    fileContent[startLine] = fileContent[startLine].removeRange(startColumn, fileContent[startLine].length)
+                    for (line in startLine + 1 until endLine) {
+                        fileContent.removeAt(line)
+                    }
+                    fileContent[endLine].removeRange(0 , endColumn)
+                    fileContent[startLine] = StringBuilder(fileContent[startLine]).apply { insert(startColumn, it) }.toString()
                 } else {
-                    fileContent[startLine] = it
+                    // whole range (startLine, endLine) is changed
+                    for (line in startLine.. endLine) {
+                        fileContent.removeAt(line)
+                    }
+                    // insertedContent already contains newlines, so could be inserted simply starting from startLine
+                    fileContent.add(startLine, it)
                 }
             } ?: run {
 
@@ -283,23 +294,24 @@ class SarifFixAdapter(
             // single line fix
             insertedContent?.let {
                 if (startColumn != null && endColumn != null) {
+                    // replace range
                     fileContent[startLine] = fileContent[startLine].replaceRange(startColumn, endColumn, it)
                 } else {
+                    // replace whole line
                     fileContent[startLine] = it
                 }
             } ?: run {
-
+                if (startColumn != null && endColumn != null) {
+                    // remove range
+                    fileContent[startLine] = fileContent[startLine].removeRange(startColumn, endColumn)
+                } else {
+                    // remove whole line
+                    fileContent.removeAt(startLine)
+                }
             }
         }
 
 
-    }
-
-
-    private fun String?.isMultiline(): Boolean {
-        return this?.let { content ->
-            content.countLines() > 1
-        } == true
     }
 
     private fun String.countLines(): Int {
