@@ -20,7 +20,8 @@
                   "replacements": [
                     {
                       "deletedRegion": {
-                        "startLine": 9
+                        "startLine": 9,
+                        "endLine": 10
                       },
                       "insertedContent": {
                         "text": "    nameMyaSayR\n}\n// comment\n"

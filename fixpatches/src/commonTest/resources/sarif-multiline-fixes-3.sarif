@@ -20,12 +20,13 @@
                   "replacements": [
                     {
                       "deletedRegion": {
-                        "endColumn": 19,
-                        "startColumn": 9,
-                        "startLine": 9
+                        "endColumn": 10,
+                        "startColumn": 32,
+                        "startLine": 8
+                        "endLine": 9
                       },
                       "insertedContent": {
-                        "text": "MyaSayR\n}\n// comment\n"
+                        "text": "some new comment\n    name"
                       }
                     }
                   ]

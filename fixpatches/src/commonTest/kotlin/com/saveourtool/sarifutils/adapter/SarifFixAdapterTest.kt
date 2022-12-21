@@ -478,11 +478,13 @@ class SarifFixAdapterTest {
 
         val expectedDelta =
             """
-                ChangeDelta, position 8, lines:
-                -    NAme[_]M[Y]a[_s]ayR[_]
-                +    NAmeM<y>a<S>ayR
+                ChangeDelta, position 7, lines:
+                -    // ;warn:9:5: [ENUM_VALUE] [enum value]s[ sh]o[uld b]e [i]n[ s]e[lected] [UP<br/>PER_CASE snake/Pas]c[alCase f]o[r]m[at: NA]me[_MYa_sayR_{{.*}}]
+                +    // ;warn:9:5: [ENUM_VALUE] so<m>e ne<w> comme<nt>
                 
-                InsertDelta(source=[position: 10, size: 0, lines: []], target=[position: 10, size: 1, lines: [// comment]])
+                
+                -    [NA]me[_]MYa_sayR_
+                +    <na>meMYa_sayR_
                 """.trimIndent()
 
         assertEquals(expectedDelta, diff.trimIndent())

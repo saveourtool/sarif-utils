@@ -156,20 +156,14 @@ class SarifFixAdapter(
 
     /**
      * It's not require to present endLine, if fix represents the single line changes,
-     * also, maybe it won't present in multiline fix too, since `insertedContent` will contain '\n' by itself
      * so, for consistency we will set `endLine` by ourselves, if it absent
      *
      * @param replacement replacement instance, with probably missing [endLine] field
      * @return updated replacement, with filled [endLine], if it was absent
      */
     private fun recoverEndLine(replacement: Replacement): Replacement = if (replacement.deletedRegion.endLine == null) {
-        // count the number of lines in inserted text
-        val linesNumber = replacement.insertedContent?.text?.countLines() ?: 1
-        // calculate shift from startLine, if linesNumber = 1 => endLine equals startLine, and shift is 0
-        // else shift = linesNumber - 1 and endLine = startLine + shift
-        val shiftFromStartLine = linesNumber - 1
         val deletedRegion = replacement.deletedRegion.copy(
-            endLine = replacement.deletedRegion.startLine!! + shiftFromStartLine
+            endLine = replacement.deletedRegion.startLine
         )
         replacement.copy(
             deletedRegion = deletedRegion
@@ -332,12 +326,10 @@ class SarifFixAdapter(
     ) {
         // remove characters in startLine after startColumn
         fileContent[startLine] = fileContent[startLine].removeRange(startColumn, fileContent[startLine].length)
-        // TODO
         // remove lines between startLine and endLine
-        fileContent.subList(startLine + 1, min(fileContent.size, endLine)).clear()
+        fileContent.subList(startLine + 1, endLine).clear()
         // remove characters in endLine before endColumn
-        // TODO
-        fileContent[min(fileContent.size - 1, endLine)].removeRange(0, min(endColumn, fileContent[min(fileContent.size - 1, endLine)].length))
+        fileContent[endLine] = fileContent[endLine].removeRange(0, endColumn)
     }
 
     private fun removeMultiLines(
@@ -346,8 +338,7 @@ class SarifFixAdapter(
         endLine: Int,
     ) {
         // remove whole range (startLine, endLine)
-        // TODO
-        fileContent.subList(startLine, min(fileContent.size, endLine + 1)).clear()
+        fileContent.subList(startLine, endLine + 1).clear()
     }
 
     private fun applySingleLineFix(
