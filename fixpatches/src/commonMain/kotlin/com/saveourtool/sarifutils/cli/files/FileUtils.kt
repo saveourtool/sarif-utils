@@ -27,6 +27,20 @@ internal fun readFile(path: Path): String = fs.read(path) {
 }
 
 /**
+ * @param targetFile file whether to write [content]
+ * @param content data to be written
+ */
+internal fun writeContentWithNewLinesToFile(targetFile: Path, content: List<String>) = fs.write(targetFile) {
+    content.forEach { line ->
+            if (!line.contains('\n')) {
+                writeUtf8(line + '\n')
+            } else {
+                writeUtf8(line)
+            }
+        }
+    }
+
+/**
  * Create a temporary directory
  *
  * @param prefix will be prepended to directory name

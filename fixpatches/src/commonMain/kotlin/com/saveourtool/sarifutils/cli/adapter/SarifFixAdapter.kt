@@ -6,6 +6,7 @@ import com.saveourtool.sarifutils.cli.files.createTempDir
 import com.saveourtool.sarifutils.cli.files.fs
 import com.saveourtool.sarifutils.cli.files.readFile
 import com.saveourtool.sarifutils.cli.files.readLines
+import com.saveourtool.sarifutils.cli.files.writeContentWithNewLinesToFile
 import com.saveourtool.sarifutils.cli.utils.adaptedIsAbsolute
 import com.saveourtool.sarifutils.cli.utils.getUriBaseIdForArtifactLocation
 import com.saveourtool.sarifutils.cli.utils.resolveUriBaseId
@@ -251,11 +252,7 @@ class SarifFixAdapter(
 
             applyFix(fileContent, insertedContent, startLine, endLine, startColumn, endColumn)
         }
-        fs.write(targetFileCopy) {
-            fileContent.forEach { line ->
-                writeUtf8(line + '\n')
-            }
-        }
+        writeContentWithNewLinesToFile(targetFileCopy, fileContent)
         return targetFileCopy
     }
 
