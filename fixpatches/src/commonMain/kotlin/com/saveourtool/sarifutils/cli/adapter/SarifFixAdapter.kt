@@ -146,11 +146,29 @@ class SarifFixAdapter(
     private fun sortReplacementsByStartLine(
         fileReplacementsListForSingleFile: FileReplacements
     ): List<Replacement> = fileReplacementsListForSingleFile.replacements.map { replacement ->
-        // it's not require to present endLine, if fix represents the single line changes,
-        // however, for consistency we will set it anyway
-        if (replacement.deletedRegion.endLine == null) {
+        val updatedReplacement = recoverEndLine(replacement)
+        updatedReplacement
+    }.sortedWith(
+        compareBy({ it.deletedRegion.startLine }, { it.deletedRegion.endLine })
+    )
+
+    /**
+     * It's not require to present endLine, if fix represents the single line changes,
+     * also, maybe it won't present in multiline fix too, since `insertedContent` will contain '\n' by itself
+     * so, for consistency we will set `endLine` by ourselves, if it absent
+     *
+     * @param replacement replacement instance, with probably missing [endLine] field
+     * @return updated replacement, with filled [endLine], if it was absent
+     */
+    private fun recoverEndLine(replacement: Replacement): Replacement {
+        return if (replacement.deletedRegion.endLine == null) {
+            // count the number of lines in inserted text
+            val linesNumber = replacement.insertedContent?.text?.countLines() ?: 1
+            // calculate shift from startLine, if linesNumber = 1 => endLine equals startLine, and shift is 0
+            // else shift = linesNumber - 1 and endLine = startLine + shift
+            val shiftFromStartLine = linesNumber - 1
             val deletedRegion = replacement.deletedRegion.copy(
-                endLine = replacement.deletedRegion.startLine
+                endLine = replacement.deletedRegion.startLine!! + shiftFromStartLine
             )
             replacement.copy(
                 deletedRegion = deletedRegion
@@ -158,9 +176,7 @@ class SarifFixAdapter(
         } else {
             replacement
         }
-    }.sortedWith(
-        compareBy({ it.deletedRegion.startLine }, { it.deletedRegion.endLine })
-    )
+    }
 
     /**
      * For the [sortedReplacements] list take only non overlapping replacements.
@@ -242,6 +258,52 @@ class SarifFixAdapter(
             }
         }
         return targetFileCopy
+    }
+
+    private fun foo(
+        fileContent: MutableList<String>,
+        insertedContent: String?,
+        startLine: Int,
+        endLine: Int,
+        startColumn: Int?,
+        endColumn: Int?
+    ) {
+        if (startLine != endLine || insertedContent.isMultiline()) {
+            // multiline fix
+            insertedContent?.let {
+                if (startColumn != null && endColumn != null) {
+                    fileContent[startLine] = fileContent[startLine].replaceRange(startColumn, endColumn, it)
+                } else {
+                    fileContent[startLine] = it
+                }
+            } ?: run {
+
+            }
+        } else {
+            // single line fix
+            insertedContent?.let {
+                if (startColumn != null && endColumn != null) {
+                    fileContent[startLine] = fileContent[startLine].replaceRange(startColumn, endColumn, it)
+                } else {
+                    fileContent[startLine] = it
+                }
+            } ?: run {
+
+            }
+        }
+
+
+    }
+
+
+    private fun String?.isMultiline(): Boolean {
+        return this?.let { content ->
+            content.countLines() > 1
+        } == true
+    }
+
+    private fun String.countLines(): Int {
+        return this.split('\n').filterNot { it.isBlank() }.size
     }
 
     /**
