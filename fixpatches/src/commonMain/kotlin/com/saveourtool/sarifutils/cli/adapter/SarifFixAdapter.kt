@@ -19,7 +19,6 @@ import okio.Path.Companion.toPath
 
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-import kotlin.math.min
 
 /**
  * Adapter for applying sarif fix object replacements to the corresponding target files
@@ -248,11 +247,6 @@ class SarifFixAdapter(
             applyFix(fileContent, insertedContent, startLine, endLine, startColumn, endColumn)
         }
         writeContentWithNewLinesToFile(targetFileCopy, fileContent)
-        val a = readLines(targetFileCopy).toMutableList()
-        println("=================\n")
-        a.forEach {
-            println(it)
-        }
         return targetFileCopy
     }
 
@@ -276,7 +270,6 @@ class SarifFixAdapter(
         startColumn: Int?,
         endColumn: Int?
     ) {
-        println("----------------FIX startLine ${startLine} endLine ${endLine} startColumn ${startColumn} endColumn $endColumn")
         if (startLine != endLine) {
             // multiline fix
             applyMultiLineFix(fileContent, insertedContent, startLine, endLine, startColumn, endColumn)
@@ -366,8 +359,6 @@ class SarifFixAdapter(
             }
         }
     }
-
-    private fun String.countLines(): Int = this.split('\n').filterNot { it.isBlank() }.size
 
     private fun Replacement.prettyString(): String = "(startLine: ${this.deletedRegion.startLine}, endLine: ${this.deletedRegion.endLine}, " +
             "startColumn: ${this.deletedRegion.startColumn}, endColumn: ${this.deletedRegion.endColumn}, insertedContent: ${this.insertedContent})"

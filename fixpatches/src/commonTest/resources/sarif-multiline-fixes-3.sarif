@@ -46,9 +46,12 @@
                 },
                 "region": {
                   "snippet": {
-                    "text": "    NAme_MYa_sayR_\n}\n"
+                    "text": "enum values should be in selected UPPER_CASE snake/PascalCase format: NAme_MYa_sayR_{{.*}}\n    NAme_"
                   },
-                  "startLine": 9
+                    "endColumn": 10,
+                    "startColumn": 32,
+                    "startLine": 8
+                    "endLine": 9
                 }
               }
             }
