@@ -253,6 +253,11 @@ class SarifFixAdapter(
             applyFix(fileContent, insertedContent, startLine, endLine, startColumn, endColumn)
         }
         writeContentWithNewLinesToFile(targetFileCopy, fileContent)
+        val a = readLines(targetFileCopy).toMutableList()
+        println("=================\n")
+        a.forEach {
+            println(it)
+        }
         return targetFileCopy
     }
 
@@ -326,9 +331,7 @@ class SarifFixAdapter(
         // remove characters in startLine after startColumn
         fileContent[startLine] = fileContent[startLine].removeRange(startColumn, fileContent[startLine].length)
         // remove lines between startLine and endLine
-        for (line in startLine + 1 until endLine) {
-            fileContent.removeAt(line)
-        }
+        fileContent.subList(startLine + 1, endLine - 1).clear()
         // remove characters in endLine before endColumn
         fileContent[endLine].removeRange(0, endColumn)
     }
@@ -339,9 +342,7 @@ class SarifFixAdapter(
         endLine: Int,
     ) {
         // remove whole range (startLine, endLine)
-        for (line in startLine..endLine) {
-            fileContent.removeAt(line)
-        }
+        fileContent.subList(startLine, endLine).clear()
     }
 
     private fun applySingleLineFix(
