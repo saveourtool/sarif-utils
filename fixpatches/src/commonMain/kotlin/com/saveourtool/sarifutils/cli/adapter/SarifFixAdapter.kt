@@ -242,6 +242,7 @@ class SarifFixAdapter(
 
         replacements.forEach { replacement ->
             val startLine = replacement.deletedRegion.startLine!!.toInt() - 1
+            val endLine = replacement.deletedRegion.endLine!!.toInt() - 1
             val startColumn = replacement.deletedRegion.startColumn?.let {
                 it.toInt() - 1
             }
@@ -250,7 +251,7 @@ class SarifFixAdapter(
             }
             val insertedContent = replacement.insertedContent?.text
 
-            applyFixToLine(fileContent, insertedContent, startLine, startColumn, endColumn)
+            applyFix(fileContent, insertedContent, startLine, endLine, startColumn, endColumn)
         }
         fs.write(targetFileCopy) {
             fileContent.forEach { line ->
@@ -260,7 +261,16 @@ class SarifFixAdapter(
         return targetFileCopy
     }
 
-    private fun foo(
+    /**
+     * Apply fixes into [fileContent]
+     *
+     * @param fileContent file data, where need to change content
+     * @param insertedContent represents inserted content into the line from [fileContent] with index [startLine], or null if fix represent the deletion of region
+     * @param startLine index of line, which need to be changed
+     * @param startColumn index of column, starting from which content should be changed, or null if [startLine] will be completely replaced
+     * @param endColumn index of column, ending with which content should be changed, or null if [startLine] will be completely replaced
+     */
+    private fun applyFix(
         fileContent: MutableList<String>,
         insertedContent: String?,
         startLine: Int,
@@ -270,64 +280,70 @@ class SarifFixAdapter(
     ) {
         if (startLine != endLine) {
             // multiline fix
-            insertedContent?.let {
-                if (startColumn != null && endColumn != null) {
-                    // remove characters in startLine after startColumn
-                    fileContent[startLine] = fileContent[startLine].removeRange(startColumn, fileContent[startLine].length)
-                    for (line in startLine + 1 until endLine) {
-                        fileContent.removeAt(line)
-                    }
-                    fileContent[endLine].removeRange(0 , endColumn)
-                    fileContent[startLine] = StringBuilder(fileContent[startLine]).apply { insert(startColumn, it) }.toString()
-                } else {
-                    // whole range (startLine, endLine) is changed
-                    for (line in startLine.. endLine) {
-                        fileContent.removeAt(line)
-                    }
-                    // insertedContent already contains newlines, so could be inserted simply starting from startLine
-                    fileContent.add(startLine, it)
-                }
-            } ?: run {
-
-            }
+            applyMultiLineFix(fileContent, insertedContent, startLine, endLine, startColumn, endColumn)
         } else {
             // single line fix
-            insertedContent?.let {
-                if (startColumn != null && endColumn != null) {
-                    // replace range
-                    fileContent[startLine] = fileContent[startLine].replaceRange(startColumn, endColumn, it)
-                } else {
-                    // replace whole line
-                    fileContent[startLine] = it
-                }
-            } ?: run {
-                if (startColumn != null && endColumn != null) {
-                    // remove range
-                    fileContent[startLine] = fileContent[startLine].removeRange(startColumn, endColumn)
-                } else {
-                    // remove whole line
-                    fileContent.removeAt(startLine)
-                }
-            }
+            applySingleLineFix(fileContent, insertedContent, startLine, startColumn, endColumn)
         }
 
 
     }
 
-    private fun String.countLines(): Int {
-        return this.split('\n').filterNot { it.isBlank() }.size
+    private fun applyMultiLineFix(
+        fileContent: MutableList<String>,
+        insertedContent: String?,
+        startLine: Int,
+        endLine: Int,
+        startColumn: Int?,
+        endColumn: Int?
+    ) {
+        insertedContent?.let {
+            if (startColumn != null && endColumn != null) {
+                removeMultiLineRange(fileContent, startLine, endLine, startColumn, endColumn)
+                fileContent[startLine] = StringBuilder(fileContent[startLine]).apply { insert(startColumn, it) }.toString()
+            } else {
+                removeMultiLines(fileContent, startLine, endLine)
+                // insertedContent already contains newlines, so could be inserted simply starting from startLine
+                fileContent.add(startLine, it)
+            }
+        } ?: run {
+            if (startColumn != null && endColumn != null) {
+                removeMultiLineRange(fileContent, startLine, endLine, startColumn, endColumn)
+            } else {
+                removeMultiLines(fileContent, startLine, endLine)
+            }
+        }
     }
 
-    /**
-     * Apply single line fixes into [fileContent]
-     *
-     * @param fileContent file data, where need to change content
-     * @param insertedContent represents inserted content into the line from [fileContent] with index [startLine], or null if fix represent the deletion of region
-     * @param startLine index of line, which need to be changed
-     * @param startColumn index of column, starting from which content should be changed, or null if [startLine] will be completely replaced
-     * @param endColumn index of column, ending with which content should be changed, or null if [startLine] will be completely replaced
-     */
-    private fun applyFixToLine(
+    private fun removeMultiLineRange(
+        fileContent: MutableList<String>,
+        startLine: Int,
+        endLine: Int,
+        startColumn: Int,
+        endColumn: Int
+    ) {
+        // remove characters in startLine after startColumn
+        fileContent[startLine] = fileContent[startLine].removeRange(startColumn, fileContent[startLine].length)
+        // remove lines between startLine and endLine
+        for (line in startLine + 1 until endLine) {
+            fileContent.removeAt(line)
+        }
+        // remove characters in endLine before endColumn
+        fileContent[endLine].removeRange(0 , endColumn)
+    }
+
+    private fun removeMultiLines(
+        fileContent: MutableList<String>,
+        startLine: Int,
+        endLine: Int,
+    ) {
+        // whole range (startLine, endLine) is changed
+        for (line in startLine.. endLine) {
+            fileContent.removeAt(line)
+        }
+    }
+
+    private fun applySingleLineFix(
         fileContent: MutableList<String>,
         insertedContent: String?,
         startLine: Int,
@@ -336,19 +352,24 @@ class SarifFixAdapter(
     ) {
         insertedContent?.let {
             if (startColumn != null && endColumn != null) {
+                // replace range
                 fileContent[startLine] = fileContent[startLine].replaceRange(startColumn, endColumn, it)
             } else {
+                // replace whole line
                 fileContent[startLine] = it
             }
         } ?: run {
             if (startColumn != null && endColumn != null) {
+                // remove range
                 fileContent[startLine] = fileContent[startLine].removeRange(startColumn, endColumn)
             } else {
-                // remove all content but leave empty line, until we support https://github.com/saveourtool/sarif-utils/issues/13
-                fileContent[startLine] = "\n"
+                // remove whole line
+                fileContent.removeAt(startLine)
             }
         }
     }
+
+    private fun String.countLines(): Int = this.split('\n').filterNot { it.isBlank() }.size
 
     private fun Replacement.prettyString(): String = "(startLine: ${this.deletedRegion.startLine}, endLine: ${this.deletedRegion.endLine}, " +
             "startColumn: ${this.deletedRegion.startColumn}, endColumn: ${this.deletedRegion.endColumn}, insertedContent: ${this.insertedContent})"
