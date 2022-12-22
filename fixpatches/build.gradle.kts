@@ -20,15 +20,4 @@ kotlin {
     }
 }
 
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            groupId = "com.saveourtool.sarif-utils"
-            artifactId = "sarif-utils"
-            version = version
-            from(components["java"])
-        }
-    }
-}
-
 configurePublishing()
