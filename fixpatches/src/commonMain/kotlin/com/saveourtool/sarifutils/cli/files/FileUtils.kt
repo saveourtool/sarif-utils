@@ -27,6 +27,9 @@ internal fun readFile(path: Path): String = fs.read(path) {
 }
 
 /**
+ * Write [content] to the [targetFile], some of the elements in [content] could represent the multiline strings,
+ * which already contain all necessary escape characters, in this case, write them as-is, otherwise add newline at the end
+ *
  * @param targetFile file whether to write [content]
  * @param content data to be written
  * @return [Unit]
