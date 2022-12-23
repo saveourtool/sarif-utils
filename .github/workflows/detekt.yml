@@ -7,8 +7,6 @@ on:
 
 jobs:
   detekt_check:
-    # Temporary disable action
-    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

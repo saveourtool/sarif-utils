@@ -8,8 +8,6 @@ on:
 
 jobs:
   build_and_test:
-    # Temporary disable action
-    if: ${{ false }}
     name: Build and test
     runs-on: ${{ matrix.os }}
     strategy:

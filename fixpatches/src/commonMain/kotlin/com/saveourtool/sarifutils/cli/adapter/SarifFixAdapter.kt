@@ -26,6 +26,7 @@ import kotlinx.serialization.json.Json
  * @param sarifFile path to the sarif file with fix object replacements
  * @param targetFiles list of the target files, to which above fixes need to be applied
  */
+@Suppress("TooManyFunctions")
 class SarifFixAdapter(
     private val sarifFile: Path,
     private val targetFiles: List<Path>
@@ -261,7 +262,7 @@ class SarifFixAdapter(
      * @param startColumn index of column, starting from which content should be changed, or null if range ([startLine], [endLine]) will be completely replaced
      * @param endColumn index of column, ending with which content should be changed, or null if range ([startLine], [endLine]) will be completely replaced
      */
-    @Suppress("TOO_MANY_PARAMETERS")
+    @Suppress("TOO_MANY_PARAMETERS", "LongParameterList")
     private fun applyFix(
         fileContent: MutableList<String>,
         insertedContent: String?,
@@ -279,7 +280,7 @@ class SarifFixAdapter(
         }
     }
 
-    @Suppress("TOO_MANY_PARAMETERS")
+    @Suppress("TOO_MANY_PARAMETERS", "LongParameterList")
     private fun applyMultiLineFix(
         fileContent: MutableList<String>,
         insertedContent: String?,

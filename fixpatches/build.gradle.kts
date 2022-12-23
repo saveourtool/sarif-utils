@@ -1,5 +1,8 @@
+import com.saveourtool.sarifutils.buildutils.configurePublishing
+
 plugins {
     id("com.saveourtool.sarifutils.buildutils.kotlin-library")
+    `maven-publish`
 }
 
 kotlin {
@@ -16,3 +19,5 @@ kotlin {
         }
     }
 }
+
+configurePublishing()
