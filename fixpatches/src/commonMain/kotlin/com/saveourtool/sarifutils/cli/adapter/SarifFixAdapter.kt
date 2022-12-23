@@ -45,7 +45,7 @@ class SarifFixAdapter(
         val processedFiles = sarifSchema210.runs.asSequence().flatMapIndexed { index, run ->
             val runReplacements: List<RuleReplacements> = extractFixObjects(run)
             if (runReplacements.isEmpty()) {
-                println("Run #$index have no any `fix object` section!")
+                println("The run #$index doesn't have any `fix object` section!")
                 emptyList()
             } else {
                 val groupedReplacements = groupReplacementsByFiles(runReplacements)
