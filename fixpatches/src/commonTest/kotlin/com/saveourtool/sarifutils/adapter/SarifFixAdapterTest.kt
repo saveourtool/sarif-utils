@@ -298,7 +298,7 @@ class SarifFixAdapterTest {
     }
 
     @Test
-    fun `sarif fix adapter test`() {
+    fun `sarif fix test`() {
         val sarifFilePath = "src/commonTest/resources/sarif-fixes.sarif".toPath()
         val testFile = "src/commonTest/resources/src/kotlin/EnumValueSnakeCaseTest.kt".toPath()
 
@@ -322,7 +322,7 @@ class SarifFixAdapterTest {
     }
 
     @Test
-    fun `sarif fix adapter test 2`() {
+    fun `sarif fix test 2`() {
         val sarifFilePath = "src/commonTest/resources/sarif-fixes-2.sarif".toPath()
         val testFile = "src/commonTest/resources/targets/autofix/autofix.py".toPath()
 
@@ -350,7 +350,7 @@ class SarifFixAdapterTest {
     }
 
     @Test
-    fun `sarif fix adapter test 3`() {
+    fun `sarif fix test 3`() {
         val testFiles = listOf(
             "src/commonTest/resources/src/kotlin/Test1.kt".toPath(),
             "src/commonTest/resources/src/kotlin/Test2.kt".toPath()
@@ -389,7 +389,7 @@ class SarifFixAdapterTest {
     }
 
     @Test
-    fun `sarif fix adapter test 4`() {
+    fun `sarif fix test 4`() {
         val sarifFilePath = "src/commonTest/resources/sarif-warn-and-fixes.sarif".toPath()
         val testFile = "src/commonTest/resources/needsfix/NeedsFix.cs".toPath()
 
@@ -407,6 +407,84 @@ class SarifFixAdapterTest {
                     ChangeDelta, position 6, lines:
                     -        // This wo[o]rd is spelled wrong.
                     +        // This word is spelled wrong.
+                """.trimIndent()
+
+        assertEquals(expectedDelta, diff.trimIndent())
+    }
+
+    @Test
+    fun `sarif multiline fix`() {
+        val sarifFilePath = "src/commonTest/resources/sarif-multiline-fixes.sarif".toPath()
+        val testFile = "src/commonTest/resources/src/kotlin/EnumValueSnakeCaseTest.kt".toPath()
+
+        val sarifFixAdapter = SarifFixAdapter(
+            sarifFile = sarifFilePath,
+            targetFiles = listOf(testFile)
+        )
+
+        val processedFile = sarifFixAdapter.process().first()
+
+        val diff = calculateDiff(testFile, processedFile)
+
+        val expectedDelta =
+                """
+                        ChangeDelta, position 8, lines:
+                        -    [NA]me[_]M[Y]a[_s]ayR[_]
+                        +    <na>meM<y>a<S>ayR
+                """.trimIndent()
+
+        assertEquals(expectedDelta, diff.trimIndent())
+    }
+
+    @Test
+    fun `sarif multiline fix 2`() {
+        val sarifFilePath = "src/commonTest/resources/sarif-multiline-fixes-2.sarif".toPath()
+        val testFile = "src/commonTest/resources/src/kotlin/EnumValueSnakeCaseTest.kt".toPath()
+
+        val sarifFixAdapter = SarifFixAdapter(
+            sarifFile = sarifFilePath,
+            targetFiles = listOf(testFile)
+        )
+
+        val processedFile = sarifFixAdapter.process().first()
+
+        val diff = calculateDiff(testFile, processedFile)
+
+        val expectedDelta =
+                """
+                        ChangeDelta, position 8, lines:
+                        -    [NA]me[_]M[Y]a[_s]ayR[_]
+                        +    <na>meM<y>a<S>ayR
+                        
+                        InsertDelta(source=[position: 10, size: 0, lines: []], target=[position: 10, size: 1, lines: [// comment]])
+                """.trimIndent()
+
+        assertEquals(expectedDelta, diff.trimIndent())
+    }
+
+    @Test
+    fun `sarif multiline fix 3`() {
+        val sarifFilePath = "src/commonTest/resources/sarif-multiline-fixes-3.sarif".toPath()
+        val testFile = "src/commonTest/resources/src/kotlin/EnumValueSnakeCaseTest.kt".toPath()
+
+        val sarifFixAdapter = SarifFixAdapter(
+            sarifFile = sarifFilePath,
+            targetFiles = listOf(testFile)
+        )
+
+        val processedFile = sarifFixAdapter.process().first()
+
+        val diff = calculateDiff(testFile, processedFile)
+
+        val expectedDelta =
+                """
+                    ChangeDelta, position 7, lines:
+                    -    // ;warn:9:5: [ENUM_VALUE] [enum value]s[ sh]o[uld b]e [i]n[ s]e[lected] [UP<br/>PER_CASE snake/Pas]c[alCase f]o[r]m[at: NA]me[_MYa_sayR_{{.*}}]
+                    +    // ;warn:9:5: [ENUM_VALUE] so<m>e ne<w> comme<nt>
+                    
+                    
+                    -    [NA]me[_]MYa_sayR_
+                    +    <na>meMYa_sayR_
                 """.trimIndent()
 
         assertEquals(expectedDelta, diff.trimIndent())
