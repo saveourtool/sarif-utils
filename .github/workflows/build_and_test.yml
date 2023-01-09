@@ -97,8 +97,7 @@ jobs:
 
   report:
     name: Publish JUnit test results
-    # Temporary disable action
-    if: ${{ false }}
+    if: ${{ always() }}
     needs: build_and_test
     runs-on: ${{ matrix.os }}
 
