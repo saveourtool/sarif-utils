@@ -2,7 +2,7 @@
  * Utility methods to work with file system
  */
 
-package com.saveourtool.sarifutils.cli.files
+package com.saveourtool.sarifutils.files
 
 import okio.FileSystem
 import okio.Path

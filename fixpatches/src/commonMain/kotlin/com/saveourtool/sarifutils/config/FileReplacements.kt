@@ -1,4 +1,4 @@
-package com.saveourtool.sarifutils.cli.config
+package com.saveourtool.sarifutils.config
 
 import io.github.detekt.sarif4k.Replacement
 import okio.Path
