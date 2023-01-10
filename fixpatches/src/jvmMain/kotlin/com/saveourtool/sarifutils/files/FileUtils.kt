@@ -4,7 +4,7 @@
 
 @file:JvmName("FileUtilsJvm")
 
-package com.saveourtool.sarifutils.cli.files
+package com.saveourtool.sarifutils.files
 
 import okio.FileSystem
 

@@ -1,8 +1,5 @@
 package com.saveourtool.sarifutils.utils
 
-import com.saveourtool.sarifutils.cli.utils.getUriBaseIdForArtifactLocation
-import com.saveourtool.sarifutils.cli.utils.resolveUriBaseId
-
 import io.github.detekt.sarif4k.SarifSchema210
 import okio.Path
 import okio.Path.Companion.toPath

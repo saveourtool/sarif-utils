@@ -1,15 +1,15 @@
-package com.saveourtool.sarifutils.cli.adapter
+package com.saveourtool.sarifutils.adapter
 
-import com.saveourtool.sarifutils.cli.config.FileReplacements
-import com.saveourtool.sarifutils.cli.config.RuleReplacements
-import com.saveourtool.sarifutils.cli.files.createTempDir
-import com.saveourtool.sarifutils.cli.files.fs
-import com.saveourtool.sarifutils.cli.files.readFile
-import com.saveourtool.sarifutils.cli.files.readLines
-import com.saveourtool.sarifutils.cli.files.writeContentWithNewLinesToFile
-import com.saveourtool.sarifutils.cli.utils.adaptedIsAbsolute
-import com.saveourtool.sarifutils.cli.utils.getUriBaseIdForArtifactLocation
-import com.saveourtool.sarifutils.cli.utils.resolveUriBaseId
+import com.saveourtool.sarifutils.config.FileReplacements
+import com.saveourtool.sarifutils.config.RuleReplacements
+import com.saveourtool.sarifutils.files.createTempDir
+import com.saveourtool.sarifutils.files.fs
+import com.saveourtool.sarifutils.files.readFile
+import com.saveourtool.sarifutils.files.readLines
+import com.saveourtool.sarifutils.files.writeContentWithNewLinesToFile
+import com.saveourtool.sarifutils.utils.adaptedIsAbsolute
+import com.saveourtool.sarifutils.utils.getUriBaseIdForArtifactLocation
+import com.saveourtool.sarifutils.utils.resolveUriBaseId
 import io.github.detekt.sarif4k.Replacement
 
 import io.github.detekt.sarif4k.Run

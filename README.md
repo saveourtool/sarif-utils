@@ -22,7 +22,7 @@ which are pointed to the corresponding vulnerabilities in target files.
 
 * A `fix object` represents a proposed fix for the problem, indicated by tool.\
 It specifies a set of artifacts to modify. For each artifact, it specifies regions to remove, and provides new content to insert.
-* `Fix-Patches`, in its turn will parse such sections, create copy of target files, which are presented in `SARIF`,
+* `Fix-Patches`, in its turn, will parse such sections, create copy of target files, which are presented in `SARIF`,
 and automatically apply fixes to these copies.
 
 The result output will contain the list of paths to the copies of provided target files with applied fixes. 
@@ -32,7 +32,8 @@ The result output will contain the list of paths to the copies of provided targe
 #### How to use:
 
 Library provides easy-to-use API for fix patches applying, it's just need to provide
-the path to `SARIF` file with expected fixes and the list of paths to target files which are presented in `SARIF`.
+the path to `SARIF` file, which contain the list of fixes (`fix objects`) for target files and the list of paths to these files,
+in the manner, in which they are presented in `SARIF` (via absolute/relative paths).
 
 ```kotlin
     val processedFiles: List<Path> = SarifFixAdapter(

@@ -2,9 +2,8 @@
 
 package com.saveourtool.sarifutils.adapter
 
-import com.saveourtool.sarifutils.cli.adapter.SarifFixAdapter
-import com.saveourtool.sarifutils.cli.files.readFile
-import com.saveourtool.sarifutils.cli.files.readLines
+import com.saveourtool.sarifutils.files.readFile
+import com.saveourtool.sarifutils.files.readLines
 
 import io.github.detekt.sarif4k.Replacement
 import io.github.detekt.sarif4k.SarifSchema210

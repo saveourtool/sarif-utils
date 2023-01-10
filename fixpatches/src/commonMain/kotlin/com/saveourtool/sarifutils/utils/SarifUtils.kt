@@ -2,7 +2,7 @@
  * Utility methods to work with SARIF files.
  */
 
-package com.saveourtool.sarifutils.cli.utils
+package com.saveourtool.sarifutils.utils
 
 import io.github.detekt.sarif4k.ArtifactLocation
 import io.github.detekt.sarif4k.Result
