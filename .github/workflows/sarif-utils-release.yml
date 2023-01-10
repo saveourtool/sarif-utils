@@ -40,7 +40,7 @@ jobs:
           gradle-version: wrapper
           arguments: |
             publishToSonatype
-            closeAndReleaseSonatypeStagingRepository
+            closeSonatypeStagingRepository
             -Prelease
             --build-cache
             -PgprUser=${{ github.actor }}
