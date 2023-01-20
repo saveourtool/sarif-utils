@@ -229,7 +229,11 @@ class SarifFixAdapter(
      */
     @Suppress("TOO_LONG_FUNCTION")
     private fun applyReplacementsToSingleFile(targetFile: Path, replacements: List<Replacement>): Path {
-        val targetFileCopy = tmpDir.resolve(targetFile.name)
+        val targetFileCopy = tmpDir.resolve(targetFile)
+        // additionally create parent directories, before copy of content
+        targetFileCopy.parent?.let {
+            fs.createDirectories(it)
+        }
         fs.copy(targetFile, targetFileCopy)
 
         val fileContent = readLines(targetFileCopy).toMutableList()
