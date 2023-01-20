@@ -232,7 +232,9 @@ class SarifFixAdapter(
         val targetFileCopy = tmpDir.resolve(targetFile)
         // additionally create parent directories, before copy of content
         targetFileCopy.parent?.let {
-            fs.createDirectories(it)
+            if (!fs.exists(it)) {
+                fs.createDirectories(it)
+            }
         }
         fs.copy(targetFile, targetFileCopy)
 
