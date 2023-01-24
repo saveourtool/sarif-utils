@@ -19,8 +19,6 @@ import kotlin.test.assertEquals
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
-// FixMe: Possible problems with tests on native platforms:
-// https://youtrack.jetbrains.com/issue/KT-54634/MPP-Test-Failure-causes-KotlinJvmTestExecutorexecute1-does-not-define-failure
 @Suppress("TOO_LONG_FUNCTION")
 class SarifFixAdapterTest {
     private val diffGenerator = DiffRowGenerator(
