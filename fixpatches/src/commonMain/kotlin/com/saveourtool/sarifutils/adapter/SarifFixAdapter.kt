@@ -19,6 +19,7 @@ import okio.Path.Companion.toPath
 
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import mu.KotlinLogging
 
 /**
  * Adapter for applying sarif fix object replacements to the corresponding target files
@@ -31,6 +32,7 @@ class SarifFixAdapter(
     private val sarifFile: Path,
     private val targetFiles: List<Path>
 ) {
+    private val logger = KotlinLogging.logger {}
     private val tmpDir = createTempDir(SarifFixAdapter::class.simpleName!!)
 
     /**
