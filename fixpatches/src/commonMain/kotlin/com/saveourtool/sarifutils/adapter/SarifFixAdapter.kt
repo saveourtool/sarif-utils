@@ -32,7 +32,7 @@ class SarifFixAdapter(
     private val sarifFile: Path,
     private val targetFiles: List<Path>
 ) {
-    private val logger = KotlinLogging.logger {}
+    private val log = KotlinLogging.logger {}
     private val tmpDir = createTempDir(SarifFixAdapter::class.simpleName!!)
 
     /**
@@ -41,6 +41,7 @@ class SarifFixAdapter(
      * @return list of files with applied fixes
      */
     fun process(): List<Path> {
+        log.info { "Start processing" }
         val sarifSchema210: SarifSchema210 = Json.decodeFromString(
             readFile(sarifFile)
         )
@@ -48,7 +49,7 @@ class SarifFixAdapter(
         val processedFiles = sarifSchema210.runs.asSequence().flatMapIndexed { index, run ->
             val runReplacements: List<RuleReplacements> = extractFixObjects(run)
             if (runReplacements.isEmpty()) {
-                println("The run #$index doesn't have any `fix object` section!")
+                log.warn { "The run #$index doesn't have any `fix object` section!" }
                 emptyList()
             } else {
                 val groupedReplacements = groupReplacementsByFiles(runReplacements)
@@ -79,7 +80,7 @@ class SarifFixAdapter(
                     fix.artifactChanges.mapNotNull { artifactChange ->
                         val currentArtifactLocation = artifactChange.artifactLocation
                         if (currentArtifactLocation.uri == null) {
-                            println("Error: Field `uri` is absent in `artifactLocation`! Ignore this artifact change")
+                            log.error { "Field `uri` is absent in `artifactLocation`! Ignore this artifact change" }
                             null
                         } else {
                             val uriBaseId = resolveUriBaseId(
@@ -189,8 +190,8 @@ class SarifFixAdapter(
 
         for (i in 1 until sortedReplacements.size) {
             if (sortedReplacements[i].deletedRegion.startLine!! <= currentEndLine) {
-                println("Fix ${sortedReplacements[i].prettyString()} for $filePath was ignored, due it overlaps with others." +
-                        " Only the first fix for this region will be applied.")
+                log.warn { "Fix ${sortedReplacements[i].prettyString()} for $filePath was ignored, due it overlaps with others." +
+                        " Only the first fix for this region will be applied." }
             } else {
                 nonOverlappingFixes.add(sortedReplacements[i])
                 currentEndLine = sortedReplacements[i].deletedRegion.endLine!!
@@ -215,7 +216,7 @@ class SarifFixAdapter(
             fs.canonicalize(it) == fullPathOfFileFromSarif
         }
         if (targetFile == null) {
-            println("Couldn't find appropriate target file on the path ${fileReplacements.filePath}, which provided in Sarif!")
+            log.warn { "Couldn't find appropriate target file on the path ${fileReplacements.filePath}, which provided in Sarif!" }
             null
         } else {
             applyReplacementsToSingleFile(targetFile, fileReplacements.replacements)
