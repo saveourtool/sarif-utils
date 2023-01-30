@@ -11,14 +11,16 @@ import com.saveourtool.sarifutils.utils.adaptedIsAbsolute
 import com.saveourtool.sarifutils.utils.getUriBaseIdForArtifactLocation
 import com.saveourtool.sarifutils.utils.resolveUriBaseId
 import com.saveourtool.sarifutils.utils.setLoggingLevel
+
 import io.github.detekt.sarif4k.Replacement
 import io.github.detekt.sarif4k.Run
 import io.github.detekt.sarif4k.SarifSchema210
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
 import mu.KotlinLogging
 import okio.Path
 import okio.Path.Companion.toPath
+
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 
 /**
  * Adapter for applying sarif fix object replacements to the corresponding target files
@@ -31,12 +33,12 @@ class SarifFixAdapter(
     private val sarifFile: Path,
     private val targetFiles: List<Path>
 ) {
+    private val log = KotlinLogging.logger(classSimpleName)
+    private val classSimpleName = SarifFixAdapter::class.simpleName!!
+    private val tmpDir = createTempDir(classSimpleName)
     init {
         setLoggingLevel()
     }
-    private val classSimpleName = SarifFixAdapter::class.simpleName!!
-    private val log = KotlinLogging.logger(classSimpleName)
-    private val tmpDir = createTempDir(classSimpleName)
 
     /**
      * Main entry for processing and applying fixes from sarif file into the target files
@@ -192,8 +194,10 @@ class SarifFixAdapter(
 
         for (i in 1 until sortedReplacements.size) {
             if (sortedReplacements[i].deletedRegion.startLine!! <= currentEndLine) {
-                log.warn { "Fix ${sortedReplacements[i].prettyString()} for $filePath was ignored, due it overlaps with others." +
-                        " Only the first fix for this region will be applied." }
+                log.warn {
+                    "Fix ${sortedReplacements[i].prettyString()} for $filePath was ignored, due it overlaps with others." +
+                            " Only the first fix for this region will be applied."
+                }
             } else {
                 nonOverlappingFixes.add(sortedReplacements[i])
                 currentEndLine = sortedReplacements[i].deletedRegion.endLine!!
