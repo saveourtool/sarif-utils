@@ -10,16 +10,15 @@ import com.saveourtool.sarifutils.files.writeContentWithNewLinesToFile
 import com.saveourtool.sarifutils.utils.adaptedIsAbsolute
 import com.saveourtool.sarifutils.utils.getUriBaseIdForArtifactLocation
 import com.saveourtool.sarifutils.utils.resolveUriBaseId
+import com.saveourtool.sarifutils.utils.setLoggingLevel
 import io.github.detekt.sarif4k.Replacement
-
 import io.github.detekt.sarif4k.Run
 import io.github.detekt.sarif4k.SarifSchema210
-import okio.Path
-import okio.Path.Companion.toPath
-
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import mu.KotlinLogging
+import okio.Path
+import okio.Path.Companion.toPath
 
 /**
  * Adapter for applying sarif fix object replacements to the corresponding target files
@@ -32,8 +31,12 @@ class SarifFixAdapter(
     private val sarifFile: Path,
     private val targetFiles: List<Path>
 ) {
-    private val log = KotlinLogging.logger {}
-    private val tmpDir = createTempDir(SarifFixAdapter::class.simpleName!!)
+    init {
+        setLoggingLevel()
+    }
+    private val classSimpleName = SarifFixAdapter::class.simpleName!!
+    private val log = KotlinLogging.logger(classSimpleName)
+    private val tmpDir = createTempDir(classSimpleName)
 
     /**
      * Main entry for processing and applying fixes from sarif file into the target files
@@ -41,7 +44,6 @@ class SarifFixAdapter(
      * @return list of files with applied fixes
      */
     fun process(): List<Path> {
-        log.info { "Start processing" }
         val sarifSchema210: SarifSchema210 = Json.decodeFromString(
             readFile(sarifFile)
         )

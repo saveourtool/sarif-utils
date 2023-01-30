@@ -16,22 +16,7 @@ kotlin {
                 implementation(libs.sarif4k)
                 implementation(libs.multiplatform.diff)
                 implementation(libs.kotlin.logging)
-                implementation(libs.kotlin.logging.jvm)
-                implementation(libs.log4j.core)
-                implementation(libs.log4j.slf4j.impl)
-                implementation(libs.log4j.api)
-                implementation(libs.slf4j.api)
-            }
-        }
-
-        val jvmMain by getting {
-            dependencies {
-                implementation(libs.kotlin.logging)
-                implementation(libs.kotlin.logging.jvm)
-                implementation(libs.log4j.core)
-                implementation(libs.log4j.slf4j.impl)
-                implementation(libs.log4j.api)
-                implementation(libs.slf4j.api)
+                implementation(libs.slf4j.log4j12)
             }
         }
     }
