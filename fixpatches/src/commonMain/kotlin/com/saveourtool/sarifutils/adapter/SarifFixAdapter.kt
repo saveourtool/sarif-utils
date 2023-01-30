@@ -33,7 +33,10 @@ class SarifFixAdapter(
     private val sarifFile: Path,
     private val targetFiles: List<Path>
 ) {
+    @Suppress("WRONG_ORDER_IN_CLASS_LIKE_STRUCTURES")  // https://github.com/saveourtool/diktat/issues/1602
     private val classSimpleName = SarifFixAdapter::class.simpleName!!
+
+    @Suppress("WRONG_ORDER_IN_CLASS_LIKE_STRUCTURES")
     private val log = KotlinLogging.logger(classSimpleName)
     private val tmpDir = createTempDir(classSimpleName)
     init {
