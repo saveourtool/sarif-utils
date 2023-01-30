@@ -33,8 +33,8 @@ class SarifFixAdapter(
     private val sarifFile: Path,
     private val targetFiles: List<Path>
 ) {
-    private val log = KotlinLogging.logger(classSimpleName)
     private val classSimpleName = SarifFixAdapter::class.simpleName!!
+    private val log = KotlinLogging.logger(classSimpleName)
     private val tmpDir = createTempDir(classSimpleName)
     init {
         setLoggingLevel()
