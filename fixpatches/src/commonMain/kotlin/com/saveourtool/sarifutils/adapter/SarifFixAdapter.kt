@@ -10,10 +10,12 @@ import com.saveourtool.sarifutils.files.writeContentWithNewLinesToFile
 import com.saveourtool.sarifutils.utils.adaptedIsAbsolute
 import com.saveourtool.sarifutils.utils.getUriBaseIdForArtifactLocation
 import com.saveourtool.sarifutils.utils.resolveUriBaseId
-import io.github.detekt.sarif4k.Replacement
+import com.saveourtool.sarifutils.utils.setLoggingLevel
 
+import io.github.detekt.sarif4k.Replacement
 import io.github.detekt.sarif4k.Run
 import io.github.detekt.sarif4k.SarifSchema210
+import mu.KotlinLogging
 import okio.Path
 import okio.Path.Companion.toPath
 
@@ -31,7 +33,15 @@ class SarifFixAdapter(
     private val sarifFile: Path,
     private val targetFiles: List<Path>
 ) {
-    private val tmpDir = createTempDir(SarifFixAdapter::class.simpleName!!)
+    @Suppress("WRONG_ORDER_IN_CLASS_LIKE_STRUCTURES")  // https://github.com/saveourtool/diktat/issues/1602
+    private val classSimpleName = SarifFixAdapter::class.simpleName!!
+
+    @Suppress("WRONG_ORDER_IN_CLASS_LIKE_STRUCTURES")
+    private val log = KotlinLogging.logger(classSimpleName)
+    private val tmpDir = createTempDir(classSimpleName)
+    init {
+        setLoggingLevel()
+    }
 
     /**
      * Main entry for processing and applying fixes from sarif file into the target files
@@ -46,7 +56,7 @@ class SarifFixAdapter(
         val processedFiles = sarifSchema210.runs.asSequence().flatMapIndexed { index, run ->
             val runReplacements: List<RuleReplacements> = extractFixObjects(run)
             if (runReplacements.isEmpty()) {
-                println("The run #$index doesn't have any `fix object` section!")
+                log.warn { "The run #$index doesn't have any `fix object` section!" }
                 emptyList()
             } else {
                 val groupedReplacements = groupReplacementsByFiles(runReplacements)
@@ -77,7 +87,7 @@ class SarifFixAdapter(
                     fix.artifactChanges.mapNotNull { artifactChange ->
                         val currentArtifactLocation = artifactChange.artifactLocation
                         if (currentArtifactLocation.uri == null) {
-                            println("Error: Field `uri` is absent in `artifactLocation`! Ignore this artifact change")
+                            log.error { "Field `uri` is absent in `artifactLocation`! Ignore this artifact change" }
                             null
                         } else {
                             val uriBaseId = resolveUriBaseId(
@@ -187,8 +197,10 @@ class SarifFixAdapter(
 
         for (i in 1 until sortedReplacements.size) {
             if (sortedReplacements[i].deletedRegion.startLine!! <= currentEndLine) {
-                println("Fix ${sortedReplacements[i].prettyString()} for $filePath was ignored, due it overlaps with others." +
-                        " Only the first fix for this region will be applied.")
+                log.warn {
+                    "Fix ${sortedReplacements[i].prettyString()} for $filePath was ignored, due it overlaps with others." +
+                            " Only the first fix for this region will be applied."
+                }
             } else {
                 nonOverlappingFixes.add(sortedReplacements[i])
                 currentEndLine = sortedReplacements[i].deletedRegion.endLine!!
@@ -213,7 +225,7 @@ class SarifFixAdapter(
             fs.canonicalize(it) == fullPathOfFileFromSarif
         }
         if (targetFile == null) {
-            println("Couldn't find appropriate target file on the path ${fileReplacements.filePath}, which provided in Sarif!")
+            log.warn { "Couldn't find appropriate target file on the path ${fileReplacements.filePath}, which provided in Sarif!" }
             null
         } else {
             applyReplacementsToSingleFile(targetFile, fileReplacements.replacements)
