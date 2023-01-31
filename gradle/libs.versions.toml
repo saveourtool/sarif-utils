@@ -11,7 +11,7 @@ multiplatform-diff = "0.4.0"
 kotlinpoet = "1.12.0"
 sarif4k = "0.3.0"
 kotlin-logging = "3.0.4"
-slf4j = "2.0.6"
+log4j = "2.19.0"
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
@@ -35,4 +35,5 @@ square-kotlinpoet = { module = "com.squareup:kotlinpoet", version.ref = "kotlinp
 diktat-gradle-plugin = { module = "org.cqfn.diktat:diktat-gradle-plugin", version.ref = "diktat" }
 sarif4k = { module = "io.github.detekt.sarif4k:sarif4k", version.ref = "sarif4k" }
 kotlin-logging = { module = "io.github.microutils:kotlin-logging", version.ref = "kotlin-logging" }
-slf4j-log4j12 = { module = "org.slf4j:slf4j-log4j12", version.ref = "slf4j" }
+log4j-slf4j2-impl = { module = " org.apache.logging.log4j:log4j-slf4j2-impl", version.ref = "log4j" }
+log4j-core = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }

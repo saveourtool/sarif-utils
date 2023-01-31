@@ -4,6 +4,4 @@
 
 package com.saveourtool.sarifutils.utils
 
-actual fun setLoggingLevel() {
-    // set log level via log4j.properties, not here
-}
+actual fun setLoggingLevel() = Unit  // set log level via log4j.properties, not here

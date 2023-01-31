@@ -16,7 +16,8 @@ kotlin {
                 implementation(libs.sarif4k)
                 implementation(libs.multiplatform.diff)
                 implementation(libs.kotlin.logging)
-                implementation(libs.slf4j.log4j12)
+                implementation(libs.log4j.slf4j2.impl)
+                implementation(libs.log4j.core)
             }
         }
     }
