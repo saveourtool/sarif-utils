@@ -16,8 +16,12 @@ kotlin {
                 implementation(libs.sarif4k)
                 implementation(libs.multiplatform.diff)
                 implementation(libs.kotlin.logging)
-                implementation(libs.log4j.slf4j2.impl)
+            }
+        }
+        val commonTest by getting {
+            dependencies {
                 implementation(libs.log4j.core)
+                implementation(libs.log4j.slf4j2.impl)
             }
         }
     }
