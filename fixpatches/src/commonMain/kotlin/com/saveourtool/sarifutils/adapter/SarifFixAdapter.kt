@@ -1,13 +1,16 @@
 package com.saveourtool.sarifutils.adapter
 
+import com.saveourtool.okio.Uri
+import com.saveourtool.okio.pathString
 import com.saveourtool.sarifutils.config.FileReplacements
 import com.saveourtool.sarifutils.config.RuleReplacements
 import com.saveourtool.sarifutils.files.createTempDir
 import com.saveourtool.sarifutils.files.fs
+import com.saveourtool.sarifutils.files.isSameFileAsSafe
 import com.saveourtool.sarifutils.files.readFile
 import com.saveourtool.sarifutils.files.readLines
 import com.saveourtool.sarifutils.files.writeContentWithNewLinesToFile
-import com.saveourtool.sarifutils.utils.adaptedIsAbsolute
+import com.saveourtool.sarifutils.net.toLocalPathExt
 import com.saveourtool.sarifutils.utils.getUriBaseIdForArtifactLocation
 import com.saveourtool.sarifutils.utils.resolveUriBaseId
 import com.saveourtool.sarifutils.utils.setLoggingLevel
@@ -215,20 +218,59 @@ class SarifFixAdapter(
      * @param fileReplacementsList list of replacements from all rules
      * @param targetFiles list of target files
      */
-    private fun applyReplacementsToFiles(fileReplacementsList: List<FileReplacements>, targetFiles: List<Path>): List<Path> = fileReplacementsList.mapNotNull { fileReplacements ->
-        val targetFile = targetFiles.find {
-            val fullPathOfFileFromSarif = if (!fileReplacements.filePath.adaptedIsAbsolute()) {
-                fs.canonicalize(sarifFile.parent!! / fileReplacements.filePath)
-            } else {
-                fileReplacements.filePath
-            }
-            fs.canonicalize(it) == fullPathOfFileFromSarif
+    @Suppress("MaxLineLength")
+    private fun applyReplacementsToFiles(
+        fileReplacementsList: List<FileReplacements>,
+        targetFiles: List<Path>,
+    ): List<Path> {
+        if (fileReplacementsList.isEmpty()) {
+            log.warn { "The list of replacements is empty." }
         }
-        if (targetFile == null) {
-            log.warn { "Couldn't find appropriate target file on the path ${fileReplacements.filePath}, which provided in Sarif!" }
-            null
-        } else {
-            applyReplacementsToSingleFile(targetFile, fileReplacements.replacements)
+        if (targetFiles.isEmpty()) {
+            log.warn { "The list of replacements is empty." }
+        }
+
+        return fileReplacementsList.mapNotNull { fileReplacements ->
+            val fileUri = fileReplacements.filePath
+            log.info { "Processing file at URI: $fileUri" }
+            val localPath = try {
+                Uri(fileUri.pathString).toLocalPathExt()
+            } catch (_: IllegalArgumentException) {
+                /*
+                 * `fileUri` is actually a path, most probably a Windows path.
+                 */
+                fileUri
+            }
+
+            val absolute = localPath.isAbsolute
+            if (localPath != fileUri) {
+                log.info { "Resolved the URI to a local path: (absolute = $absolute): $localPath" }
+            }
+
+            /*
+             * No need to check whether `localPath` is absolute: if it is,
+             * `resolve()` will ignore `sarifFile.parent` and return `localPath`
+             * intact.
+             */
+            val absoluteLocalPath = (sarifFile.parent!! / localPath).normalized()
+            if (absoluteLocalPath != localPath) {
+                log.info { "Converted the path: $localPath -> $absoluteLocalPath" }
+            }
+
+            val matchingFile = targetFiles.find { targetFile ->
+                targetFile.isSameFileAsSafe(absoluteLocalPath)
+            }
+            if (matchingFile == null) {
+                val targetFileCount = targetFiles.size
+                log.warn { "None of the $targetFileCount target file(s) matches the file from SARIF replacement: $localPath" }
+                targetFiles.forEachIndexed { index, targetFile ->
+                    log.warn { "\t${index + 1} of $targetFileCount: $targetFile" }
+                }
+
+                null
+            } else {
+                applyReplacementsToSingleFile(matchingFile, fileReplacements.replacements)
+            }
         }
     }
 
