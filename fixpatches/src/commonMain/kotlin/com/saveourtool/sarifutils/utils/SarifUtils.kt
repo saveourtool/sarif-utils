@@ -4,6 +4,7 @@
 
 package com.saveourtool.sarifutils.utils
 
+import com.saveourtool.okio.backslashify
 import io.github.detekt.sarif4k.ArtifactLocation
 import io.github.detekt.sarif4k.Result
 import io.github.detekt.sarif4k.Run
@@ -32,7 +33,7 @@ internal fun Path.adaptedIsAbsolute(): Boolean {
             (stringRepresentation.first() in 'a'..'z' || stringRepresentation.first() in 'A'..'Z') &&
             (stringRepresentation[1] == ':')
     ) {
-        return stringRepresentation.replace('/', '\\').toPath().isAbsolute
+        return stringRepresentation.backslashify().toPath().isAbsolute
     }
     return this.isAbsolute
 }
