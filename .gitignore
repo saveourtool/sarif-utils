@@ -2,6 +2,7 @@ target
 .gradle
 build
 /.idea
+/.run/
 *.iml
 out
 .DS_Store
