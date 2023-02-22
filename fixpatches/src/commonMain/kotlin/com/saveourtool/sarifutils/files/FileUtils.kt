@@ -54,9 +54,7 @@ internal fun writeContentWithNewLinesToFile(targetFile: Path, content: List<Stri
  */
 internal fun createTempDir(prefix: String = "sarifutils-tmp"): Path {
     val dirName = "$prefix-${Random.nextInt()}"
-    return (FileSystem.SYSTEM_TEMPORARY_DIRECTORY / dirName).also {
-        fs.createDirectories(it)
-    }
+    return (FileSystem.SYSTEM_TEMPORARY_DIRECTORY / dirName).createDirectories()
 }
 
 /**
@@ -117,3 +115,35 @@ internal fun Path.isSameFileAsSafe(other: Path): Boolean =
         } catch (_: IOException) {
             this.toRealPathSafe() == other.toRealPathSafe()
         }
+
+/**
+ * Creates a directory, ensuring that all nonexistent parent directories exist
+ * by creating them first.
+ *
+ * If the directory already exists, this function does not throw an exception.
+ *
+ * @return this path.
+ * @throws IOException if an I/O error occurs.
+ */
+@Throws(IOException::class)
+internal fun Path.createDirectories(): Path {
+    fs.createDirectories(this)
+    return this
+}
+
+/**
+ * Same as [Path.relativeTo], but doesn't throw an [IllegalArgumentException] if
+ * `this` and [other] are both absolute paths, but have different file system
+ * roots.
+ *
+ * @param other the other path.
+ * @return this path relativized against [other],
+ *   or `this` if this and other have different file system roots.
+ */
+internal fun Path.relativeToSafe(other: Path): Path {
+    return try {
+        relativeTo(other)
+    } catch (_: IllegalArgumentException) {
+        this
+    }
+}

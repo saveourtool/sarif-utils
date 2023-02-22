@@ -1,14 +1,17 @@
 package com.saveourtool.sarifutils.adapter
 
 import com.saveourtool.okio.Uri
+import com.saveourtool.okio.isDirectory
 import com.saveourtool.okio.pathString
 import com.saveourtool.sarifutils.config.FileReplacements
 import com.saveourtool.sarifutils.config.RuleReplacements
+import com.saveourtool.sarifutils.files.createDirectories
 import com.saveourtool.sarifutils.files.createTempDir
 import com.saveourtool.sarifutils.files.fs
 import com.saveourtool.sarifutils.files.isSameFileAsSafe
 import com.saveourtool.sarifutils.files.readFile
 import com.saveourtool.sarifutils.files.readLines
+import com.saveourtool.sarifutils.files.relativeToSafe
 import com.saveourtool.sarifutils.files.writeContentWithNewLinesToFile
 import com.saveourtool.sarifutils.net.toLocalPathExt
 import com.saveourtool.sarifutils.utils.getUriBaseIdForArtifactLocation
@@ -30,11 +33,13 @@ import kotlinx.serialization.json.Json
  *
  * @param sarifFile path to the sarif file with fix object replacements
  * @param targetFiles list of the target files, to which above fixes need to be applied
+ * @param testRoot the root directory of the test suite. Should be set to a non-`null` value if
  */
 @Suppress("TooManyFunctions")
 class SarifFixAdapter(
     private val sarifFile: Path,
-    private val targetFiles: List<Path>
+    private val targetFiles: List<Path>,
+    private val testRoot: Path? = null,
 ) {
     @Suppress("WRONG_ORDER_IN_CLASS_LIKE_STRUCTURES")  // https://github.com/saveourtool/diktat/issues/1602
     private val classSimpleName = SarifFixAdapter::class.simpleName!!
@@ -43,6 +48,10 @@ class SarifFixAdapter(
     private val log = KotlinLogging.logger(classSimpleName)
     private val tmpDir = createTempDir(classSimpleName)
     init {
+        check(testRoot == null || testRoot.isDirectory()) {
+            "Test root is not a directory: $testRoot"
+        }
+
         setLoggingLevel()
     }
 
@@ -277,22 +286,30 @@ class SarifFixAdapter(
     /**
      * Create copy of the target file and apply fixes from sarif
      *
-     * @param targetFile target file which need to be fixed
+     * @param targetFile target file which need to be fixed (may be an absolute
+     *   or a relative path).
      * @param replacements corresponding replacements for [targetFile]
      * @return file with applied fixes
      */
     @Suppress("TOO_LONG_FUNCTION")
     private fun applyReplacementsToSingleFile(targetFile: Path, replacements: List<Replacement>): Path {
-        val targetFileCopy = tmpDir.resolve(targetFile)
+        val relativeTargetFile = targetFile
+            .relativeToTestRoot()
+            .relativeToFileSystemRoot()
+
+        val targetFileCopy = tmpDir.resolve(relativeTargetFile)
         // additionally create parent directories, before copy of content
-        targetFileCopy.parent?.let {
-            if (!fs.exists(it)) {
-                fs.createDirectories(it)
-            }
+        targetFileCopy.parent?.createDirectories()
+
+        check(!targetFile.isSameFileAsSafe(targetFileCopy)) {
+            "Refusing to copy $targetFile onto itself."
         }
+
         fs.copy(targetFile, targetFileCopy)
+        log.info { "Copied $targetFile -> $targetFileCopy" }
 
         val fileContent = readLines(targetFileCopy).toMutableList()
+        log.info { "Reading $targetFileCopy: ${fileContent.size} line(s) read." }
 
         replacements.forEach { replacement ->
             val startLine = replacement.deletedRegion.startLine!!.toInt() - 1
@@ -395,6 +412,9 @@ class SarifFixAdapter(
         fileContent.subList(startLine, endLine + 1).clear()
     }
 
+    /**
+     * @param startLine the 0-based line number,
+     */
     private fun applySingleLineFix(
         fileContent: MutableList<String>,
         insertedContent: String?,
@@ -402,6 +422,19 @@ class SarifFixAdapter(
         startColumn: Int?,
         endColumn: Int?
     ) {
+        if (fileContent.isEmpty()) {
+            log.warn { "Unable to apply the fix at line ${startLine + 1}: the file is empty" }
+            return
+        }
+
+        val lineCount = fileContent.size
+
+        if (startLine >= lineCount) {
+            log.warn { "Unable to apply the fix at line ${startLine + 1}: the file only has $lineCount line(s)." }
+            return
+        }
+
+        log.info { "Applying a single-line fix to line ${startLine + 1} out of $lineCount" }
         insertedContent?.let { content ->
             if (startColumn != null && endColumn != null) {
                 // replace range
@@ -423,4 +456,28 @@ class SarifFixAdapter(
 
     private fun Replacement.prettyString(): String = "(startLine: ${this.deletedRegion.startLine}, endLine: ${this.deletedRegion.endLine}, " +
             "startColumn: ${this.deletedRegion.startColumn}, endColumn: ${this.deletedRegion.endColumn}, insertedContent: ${this.insertedContent})"
+
+    /**
+     * @return this path, relativized against the [test root][testRoot],
+     *   assuming this path is absolute and [test root][testRoot] is non-`null`.
+     */
+    private fun Path.relativeToTestRoot(): Path =
+            when (testRoot) {
+                null -> this
+                else -> relativeToSafe(testRoot)
+            }
+
+    private fun Path.relativeToFileSystemRoot(): Path =
+            when (val root = root) {
+                null -> this
+
+                /*-
+                 * `root` is the file system root of the this path`, or `null`
+                 * if the path is relative.
+                 *
+                 * On UNIX, this will always be `/`.
+                 * On Windows, this may be `C:\`, `D:\`, etc.
+                 */
+                else -> relativeTo(root)
+            }
 }
