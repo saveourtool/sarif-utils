@@ -1,3 +1,8 @@
+@file:Suppress(
+    "FILE_IS_TOO_LONG",
+    "FILE_UNORDERED_IMPORTS",  // false positive
+)
+
 package com.saveourtool.sarifutils.adapter
 
 import com.saveourtool.okio.Uri
@@ -227,7 +232,10 @@ class SarifFixAdapter(
      * @param fileReplacementsList list of replacements from all rules
      * @param targetFiles list of target files
      */
-    @Suppress("MaxLineLength")
+    @Suppress(
+        "MaxLineLength",
+        "TOO_LONG_FUNCTION",
+    )
     private fun applyReplacementsToFiles(
         fileReplacementsList: List<FileReplacements>,
         targetFiles: List<Path>,
