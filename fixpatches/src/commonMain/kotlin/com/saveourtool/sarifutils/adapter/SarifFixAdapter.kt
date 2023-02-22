@@ -244,7 +244,7 @@ class SarifFixAdapter(
             log.warn { "The list of replacements is empty." }
         }
         if (targetFiles.isEmpty()) {
-            log.warn { "The list of replacements is empty." }
+            log.warn { "The list of target files is empty." }
         }
 
         return fileReplacementsList.mapNotNull { fileReplacements ->
