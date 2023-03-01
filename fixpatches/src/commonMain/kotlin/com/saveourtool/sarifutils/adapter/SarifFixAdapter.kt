@@ -38,7 +38,10 @@ import kotlinx.serialization.json.Json
  *
  * @param sarifFile path to the sarif file with fix object replacements
  * @param targetFiles list of the target files, to which above fixes need to be applied
- * @param testRoot the root directory of the test suite. Should be set to a non-`null` value if
+ * @param testRoot the root directory of the test suite.
+ *   Should be set to a non-`null` value for path relativization to work correctly
+ *   (in case SARIF `uri` fields contain absolute paths,
+ *   or `file://` URIs pointing to absolute paths).
  */
 @Suppress("TooManyFunctions")
 class SarifFixAdapter(
