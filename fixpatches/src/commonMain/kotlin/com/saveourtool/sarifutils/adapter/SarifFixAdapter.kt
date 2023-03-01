@@ -1,6 +1,5 @@
 @file:Suppress(
     "FILE_IS_TOO_LONG",
-    "FILE_UNORDERED_IMPORTS",  // false positive
 )
 
 package com.saveourtool.sarifutils.adapter
