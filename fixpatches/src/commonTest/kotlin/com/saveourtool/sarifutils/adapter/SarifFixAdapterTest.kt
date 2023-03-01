@@ -2,6 +2,7 @@
 
 package com.saveourtool.sarifutils.adapter
 
+import com.saveourtool.okio.isRegularFile
 import com.saveourtool.sarifutils.files.readFile
 import com.saveourtool.sarifutils.files.readLines
 
@@ -11,14 +12,20 @@ import io.github.petertrr.diffutils.diff
 import io.github.petertrr.diffutils.patch.ChangeDelta
 import io.github.petertrr.diffutils.patch.Patch
 import io.github.petertrr.diffutils.text.DiffRowGenerator
+import io.kotest.matchers.ints.shouldBeExactly
 import okio.Path
 import okio.Path.Companion.toPath
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
+/**
+ * @see SarifFixAdapter
+ */
 @Suppress("TOO_LONG_FUNCTION")
 class SarifFixAdapterTest {
     private val diffGenerator = DiffRowGenerator(
@@ -32,7 +39,9 @@ class SarifFixAdapterTest {
     @Test
     @Suppress("TOO_LONG_FUNCTION")
     fun `should read SARIF report`() {
+        // language=text
         val uri = "file:///C:/dev/sarif/sarif-tutorials/samples/Introduction/simple-example.js"
+        // language=json
         val sarif = """
             {
               "version": "2.1.0",
@@ -103,7 +112,7 @@ class SarifFixAdapterTest {
 
     @Test
     fun `should read SARIF file`() {
-        val sarifFilePath = "src/commonTest/resources/sarif-fixes.sarif".toPath()
+        val sarifFilePath = resourceDir / "sarif-fixes.sarif"
         val sarifFile = readFile(sarifFilePath)
         val sarifSchema210: SarifSchema210 = Json.decodeFromString(sarifFile)
 
@@ -116,7 +125,7 @@ class SarifFixAdapterTest {
 
     @Test
     fun `should extract SARIF fix objects`() {
-        val sarifFilePath = "src/commonTest/resources/sarif-fixes.sarif".toPath()
+        val sarifFilePath = resourceDir / "sarif-fixes.sarif"
         val sarifFile = readFile(sarifFilePath)
         val sarifSchema210: SarifSchema210 = Json.decodeFromString(sarifFile)
 
@@ -151,7 +160,7 @@ class SarifFixAdapterTest {
 
     @Test
     fun `should extract SARIF fix objects 2`() {
-        val sarifFilePath = "src/commonTest/resources/sarif-fixes-2.sarif".toPath()
+        val sarifFilePath = resourceDir / "sarif-fixes-2.sarif"
         val sarifFile = readFile(sarifFilePath)
         val sarifSchema210: SarifSchema210 = Json.decodeFromString(sarifFile)
 
@@ -203,7 +212,7 @@ class SarifFixAdapterTest {
 
     @Test
     fun `should extract SARIF fix objects 3`() {
-        val sarifFilePath = "src/commonTest/resources/sarif-fixes-3.sarif".toPath()
+        val sarifFilePath = resourceDir / "sarif-fixes-3.sarif"
         val sarifFile = readFile(sarifFilePath)
         val sarifSchema210: SarifSchema210 = Json.decodeFromString(sarifFile)
 
@@ -250,7 +259,7 @@ class SarifFixAdapterTest {
 
     @Test
     fun `should extract SARIF fix objects 4`() {
-        val sarifFilePath = "src/commonTest/resources/sarif-warn-and-fixes.sarif".toPath()
+        val sarifFilePath = resourceDir / "sarif-warn-and-fixes.sarif"
         val sarifFile = readFile(sarifFilePath)
         val sarifSchema210: SarifSchema210 = Json.decodeFromString(sarifFile)
 
@@ -296,8 +305,8 @@ class SarifFixAdapterTest {
 
     @Test
     fun `sarif fix test`() {
-        val sarifFilePath = "src/commonTest/resources/sarif-fixes.sarif".toPath()
-        val testFile = "src/commonTest/resources/src/kotlin/EnumValueSnakeCaseTest.kt".toPath()
+        val sarifFilePath = resourceDir / "sarif-fixes.sarif"
+        val testFile = resourceDir / "src" / "kotlin" / "EnumValueSnakeCaseTest.kt"
 
         val sarifFixAdapter = SarifFixAdapter(
             sarifFile = sarifFilePath,
@@ -320,8 +329,8 @@ class SarifFixAdapterTest {
 
     @Test
     fun `sarif fix test 2`() {
-        val sarifFilePath = "src/commonTest/resources/sarif-fixes-2.sarif".toPath()
-        val testFile = "src/commonTest/resources/targets/autofix/autofix.py".toPath()
+        val sarifFilePath = resourceDir / "sarif-fixes-2.sarif"
+        val testFile = resourceDir / "targets" / "autofix" / "autofix.py"
 
         val sarifFixAdapter = SarifFixAdapter(
             sarifFile = sarifFilePath,
@@ -337,8 +346,8 @@ class SarifFixAdapterTest {
                     ChangeDelta, position 4, lines:
                     -  inputs[[]x[]] = 1
                     +  <  >inputs<.get(>x<)> = 1
-                    
-                    
+
+
                     -  if inputs[[]x + 1[]] == True:
                     +  <  >if inputs<.get(>x + 1<)> == True:
                 """.trimIndent()
@@ -349,10 +358,10 @@ class SarifFixAdapterTest {
     @Test
     fun `sarif fix test 3`() {
         val testFiles = listOf(
-            "src/commonTest/resources/src/kotlin/Test1.kt".toPath(),
-            "src/commonTest/resources/src/kotlin/Test2.kt".toPath()
+            resourceDir / "src" / "kotlin" / "Test1.kt",
+            resourceDir / "src" / "kotlin" / "Test2.kt",
         )
-        val sarifFilePath = "src/commonTest/resources/sarif-fixes-3.sarif".toPath()
+        val sarifFilePath = resourceDir / "sarif-fixes-3.sarif"
         val sarifFixAdapter = SarifFixAdapter(
             sarifFile = sarifFilePath,
             targetFiles = testFiles
@@ -387,8 +396,8 @@ class SarifFixAdapterTest {
 
     @Test
     fun `sarif fix test 4`() {
-        val sarifFilePath = "src/commonTest/resources/sarif-warn-and-fixes.sarif".toPath()
-        val testFile = "src/commonTest/resources/needsfix/NeedsFix.cs".toPath()
+        val sarifFilePath = resourceDir / "sarif-warn-and-fixes.sarif"
+        val testFile = resourceDir / "needsfix" / "NeedsFix.cs"
 
         val sarifFixAdapter = SarifFixAdapter(
             sarifFile = sarifFilePath,
@@ -411,8 +420,8 @@ class SarifFixAdapterTest {
 
     @Test
     fun `sarif multiline fix`() {
-        val sarifFilePath = "src/commonTest/resources/sarif-multiline-fixes.sarif".toPath()
-        val testFile = "src/commonTest/resources/src/kotlin/EnumValueSnakeCaseTest.kt".toPath()
+        val sarifFilePath = resourceDir / "sarif-multiline-fixes.sarif"
+        val testFile = resourceDir / "src" / "kotlin" / "EnumValueSnakeCaseTest.kt"
 
         val sarifFixAdapter = SarifFixAdapter(
             sarifFile = sarifFilePath,
@@ -435,8 +444,8 @@ class SarifFixAdapterTest {
 
     @Test
     fun `sarif multiline fix 2`() {
-        val sarifFilePath = "src/commonTest/resources/sarif-multiline-fixes-2.sarif".toPath()
-        val testFile = "src/commonTest/resources/src/kotlin/EnumValueSnakeCaseTest.kt".toPath()
+        val sarifFilePath = resourceDir / "sarif-multiline-fixes-2.sarif"
+        val testFile = resourceDir / "src" / "kotlin" / "EnumValueSnakeCaseTest.kt"
 
         val sarifFixAdapter = SarifFixAdapter(
             sarifFile = sarifFilePath,
@@ -452,7 +461,7 @@ class SarifFixAdapterTest {
                         ChangeDelta, position 8, lines:
                         -    [NA]me[_]M[Y]a[_s]ayR[_]
                         +    <na>meM<y>a<S>ayR
-                        
+
                         InsertDelta(source=[position: 10, size: 0, lines: []], target=[position: 10, size: 1, lines: [// comment]])
                 """.trimIndent()
 
@@ -461,8 +470,8 @@ class SarifFixAdapterTest {
 
     @Test
     fun `sarif multiline fix 3`() {
-        val sarifFilePath = "src/commonTest/resources/sarif-multiline-fixes-3.sarif".toPath()
-        val testFile = "src/commonTest/resources/src/kotlin/EnumValueSnakeCaseTest.kt".toPath()
+        val sarifFilePath = resourceDir / "sarif-multiline-fixes-3.sarif"
+        val testFile = resourceDir / "src" / "kotlin" / "EnumValueSnakeCaseTest.kt"
 
         val sarifFixAdapter = SarifFixAdapter(
             sarifFile = sarifFilePath,
@@ -478,13 +487,90 @@ class SarifFixAdapterTest {
                     ChangeDelta, position 7, lines:
                     -    // ;warn:9:5: [ENUM_VALUE] [enum value]s[ sh]o[uld b]e [i]n[ s]e[lected] [UP<br/>PER_CASE snake/Pas]c[alCase f]o[r]m[at: NA]me[_MYa_sayR_{{.*}}]
                     +    // ;warn:9:5: [ENUM_VALUE] so<m>e ne<w> comme<nt>
-                    
-                    
+
+
                     -    [NA]me[_]MYa_sayR_
                     +    <na>meMYa_sayR_
                 """.trimIndent()
 
         assertEquals(expectedDelta, diff.trimIndent())
+    }
+
+    @Test
+    fun `no target files`() {
+        val sarifFile = resourceDir / "sarif-multiline-fixes-3.sarif"
+        assertTrue(sarifFile.isRegularFile())
+
+        val sarifFixAdapter = SarifFixAdapter(
+            sarifFile,
+            targetFiles = emptyList()
+        )
+
+        sarifFixAdapter.process().size shouldBeExactly 0
+    }
+
+    @Test
+    fun `target file exists - no replacements`() {
+        val sarifFile = resourceDir / "sarif-no-replacements.sarif"
+        val targetFile = resourceDir / "targets" / "autofix" / "autofix.py"
+
+        assertTrue(sarifFile.isRegularFile())
+        assertTrue(targetFile.isRegularFile())
+
+        val sarifFixAdapter = SarifFixAdapter(
+            sarifFile,
+            targetFiles = listOf(targetFile)
+        )
+
+        sarifFixAdapter.process().size shouldBeExactly 0
+    }
+
+    @Test
+    fun `target file nonexistent - no replacements`() {
+        val sarifFile = resourceDir / "sarif-no-replacements-nonexistent-target.sarif"
+        val targetFile = resourceDir / "nonexistent"
+
+        assertTrue(sarifFile.isRegularFile())
+        assertFalse(targetFile.isRegularFile())
+
+        val sarifFixAdapter = SarifFixAdapter(
+            sarifFile,
+            targetFiles = listOf(targetFile)
+        )
+
+        sarifFixAdapter.process().size shouldBeExactly 0
+    }
+
+    @Test
+    fun `target file exists - no artifactChanges`() {
+        val sarifFile = resourceDir / "sarif-no-artifactChanges.sarif"
+        val targetFile = resourceDir / "targets" / "autofix" / "autofix.py"
+
+        assertTrue(sarifFile.isRegularFile())
+        assertTrue(targetFile.isRegularFile())
+
+        val sarifFixAdapter = SarifFixAdapter(
+            sarifFile,
+            targetFiles = listOf(targetFile)
+        )
+
+        sarifFixAdapter.process().size shouldBeExactly 0
+    }
+
+    @Test
+    fun `target file nonexistent - no artifactChanges`() {
+        val sarifFile = resourceDir / "sarif-no-artifactChanges-nonexistent-target.sarif"
+        val targetFile = resourceDir / "nonexistent"
+
+        assertTrue(sarifFile.isRegularFile())
+        assertFalse(targetFile.isRegularFile())
+
+        val sarifFixAdapter = SarifFixAdapter(
+            sarifFile,
+            targetFiles = listOf(targetFile)
+        )
+
+        sarifFixAdapter.process().size shouldBeExactly 0
     }
 
     @Suppress("TOO_MANY_PARAMETERS")
@@ -522,5 +608,9 @@ class SarifFixAdapterTest {
         } else {
             patch.formatToString()
         }
+    }
+
+    private companion object {
+        private val resourceDir = "src".toPath() / "commonTest" / "resources"
     }
 }

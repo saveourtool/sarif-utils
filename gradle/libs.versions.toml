@@ -13,6 +13,7 @@ kotlinpoet = "1.12.0"
 sarif4k = "0.3.0"
 kotlin-logging = "3.0.5"
 log4j = "2.20.0"
+kotest = "5.5.5"
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
@@ -39,3 +40,4 @@ sarif4k = { module = "io.github.detekt.sarif4k:sarif4k", version.ref = "sarif4k"
 kotlin-logging = { module = "io.github.microutils:kotlin-logging", version.ref = "kotlin-logging" }
 log4j-slf4j2-impl = { module = " org.apache.logging.log4j:log4j-slf4j2-impl", version.ref = "log4j" }
 log4j-core = { module = "org.apache.logging.log4j:log4j-core", version.ref = "log4j" }
+kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }

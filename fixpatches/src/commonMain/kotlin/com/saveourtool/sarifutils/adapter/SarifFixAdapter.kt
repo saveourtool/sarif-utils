@@ -5,6 +5,7 @@
 package com.saveourtool.sarifutils.adapter
 
 import com.saveourtool.okio.Uri
+import com.saveourtool.okio.absolute
 import com.saveourtool.okio.createDirectories
 import com.saveourtool.okio.isDirectory
 import com.saveourtool.okio.isSameFileAsSafe
@@ -68,6 +69,11 @@ class SarifFixAdapter(
      * @return list of files with applied fixes
      */
     fun process(): List<Path> {
+        if (targetFiles.isEmpty()) {
+            log.warn { "The list of target files is empty." }
+            return emptyList()
+        }
+
         val sarifSchema210: SarifSchema210 = Json.decodeFromString(
             readFile(sarifFile)
         )
@@ -75,14 +81,22 @@ class SarifFixAdapter(
         val processedFiles = sarifSchema210.runs.asSequence().flatMapIndexed { index, run ->
             val runReplacements: List<RuleReplacements> = extractFixObjects(run)
             if (runReplacements.isEmpty()) {
-                log.warn { "The run #$index doesn't have any `fix object` section!" }
-                emptyList()
+                log.warn { "Run #${index + 1} doesn't have any `fix object` section!" }
+                emptySequence()
             } else {
                 val groupedReplacements = groupReplacementsByFiles(runReplacements)
                 // if there are several fixes by different rules for the same region within one file, take only first of them
                 // and reverse the order of replacements for each file
                 val filteredRuleReplacements = filterRuleReplacements(groupedReplacements)
-                applyReplacementsToFiles(filteredRuleReplacements, targetFiles)
+
+                when {
+                    filteredRuleReplacements.isEmpty() -> {
+                        log.warn { "Run #${index + 1} doesn't have any replacements." }
+                        emptySequence()
+                    }
+
+                    else -> applyReplacementsToFiles(filteredRuleReplacements)
+                }
             }
         }
         return processedFiles.toList()
@@ -211,6 +225,10 @@ class SarifFixAdapter(
      * @return list of non overlapping replacements
      */
     private fun getNonOverlappingReplacements(filePath: Path, sortedReplacements: List<Replacement>): MutableList<Replacement> {
+        if (sortedReplacements.isEmpty()) {
+            return mutableListOf()
+        }
+
         val nonOverlappingFixes: MutableList<Replacement> = mutableListOf(sortedReplacements[0])
         var currentEndLine = sortedReplacements[0].deletedRegion.endLine!!
 
@@ -229,68 +247,79 @@ class SarifFixAdapter(
     }
 
     /**
-     * Apply fixes from single run to the target files
+     * Apply fixes from single run to the [target files][targetFiles].
      *
      * @param fileReplacementsList list of replacements from all rules
-     * @param targetFiles list of target files
+     * @throws IllegalArgumentException if [fileReplacementsList] is empty.
+     * @throws IllegalStateException if [targetFiles] is empty.
      */
     @Suppress(
         "MaxLineLength",
         "TOO_LONG_FUNCTION",
     )
+    @Throws(
+        IllegalArgumentException::class,
+        IllegalStateException::class,
+    )
     private fun applyReplacementsToFiles(
         fileReplacementsList: List<FileReplacements>,
-        targetFiles: List<Path>,
-    ): List<Path> {
-        if (fileReplacementsList.isEmpty()) {
-            log.warn { "The list of replacements is empty." }
+    ): Sequence<Path> {
+        require(fileReplacementsList.isNotEmpty()) {
+            "The list of replacements is empty."
         }
-        if (targetFiles.isEmpty()) {
-            log.warn { "The list of target files is empty." }
+        check(targetFiles.isNotEmpty()) {
+            "The list of target files is empty."
         }
 
-        return fileReplacementsList.mapNotNull { fileReplacements ->
-            val fileUri = fileReplacements.filePath
-            log.info { "Processing file at URI: $fileUri" }
-            val localPath = try {
-                Uri(fileUri.pathString).toLocalPathExt()
-            } catch (_: IllegalArgumentException) {
-                /*
-                 * `fileUri` is actually a path, most probably a Windows path.
-                 */
-                fileUri
+        return fileReplacementsList.asSequence()
+            .filter { (fileUri, replacements) ->
+                val replacementsEmpty = replacements.isEmpty()
+                if (replacementsEmpty) {
+                    log.warn { "Skipping file at URI: $fileUri, because the list of replacements is empty" }
+                }
+                !replacementsEmpty
             }
-
-            val absolute = localPath.isAbsolute
-            if (localPath != fileUri) {
-                log.info { "Resolved the URI to a local path: (absolute = $absolute): $localPath" }
-            }
-
-            /*
-             * No need to check whether `localPath` is absolute: if it is,
-             * `resolve()` will ignore `sarifFile.parent` and return `localPath`
-             * intact.
-             */
-            val absoluteLocalPath = (sarifFile.parent!! / localPath).normalized()
-            if (absoluteLocalPath != localPath) {
-                log.info { "Converted the path: $localPath -> $absoluteLocalPath" }
-            }
-
-            val matchingFile = targetFiles.find { targetFile ->
-                targetFile.isSameFileAsSafe(absoluteLocalPath)
-            }
-            if (matchingFile == null) {
-                val targetFileCount = targetFiles.size
-                log.warn { "None of the $targetFileCount target file(s) matches the file from SARIF replacement: $localPath" }
-                targetFiles.forEachIndexed { index, targetFile ->
-                    log.warn { "\t${index + 1} of $targetFileCount: $targetFile" }
+            .mapNotNull { (fileUri, replacements) ->
+                log.info { "Processing file at URI: $fileUri" }
+                val localPath = try {
+                    Uri(fileUri.pathString).toLocalPathExt()
+                } catch (_: IllegalArgumentException) {
+                    /*
+                     * `fileUri` is actually a path, most probably a Windows path.
+                     */
+                    fileUri
                 }
 
-                null
-            } else {
-                applyReplacementsToSingleFile(matchingFile, fileReplacements.replacements)
+                val absolute = localPath.isAbsolute
+                if (localPath != fileUri) {
+                    log.info { "Resolved the URI to a local path: (absolute = $absolute): $localPath" }
+                }
+
+                /*
+                 * No need to check whether `localPath` is absolute: if it is,
+                 * `resolve()` will ignore `sarifFile.parent` and return `localPath`
+                 * intact.
+                 */
+                val absoluteLocalPath = (sarifFile.parent!!.absolute() / localPath).normalized()
+                if (absoluteLocalPath != localPath) {
+                    log.info { "Converted the path: $localPath -> $absoluteLocalPath" }
+                }
+
+                val matchingFile = targetFiles.find { targetFile ->
+                    targetFile.isSameFileAsSafe(absoluteLocalPath)
+                }
+                if (matchingFile == null) {
+                    val targetFileCount = targetFiles.size
+                    log.warn { "None of the $targetFileCount target file(s) matches the file from SARIF replacement: $localPath" }
+                    targetFiles.forEachIndexed { index, targetFile ->
+                        log.warn { "\t${index + 1} of $targetFileCount: $targetFile" }
+                    }
+
+                    null
+                } else {
+                    applyReplacementsToSingleFile(matchingFile, replacements)
+                }
             }
-        }
     }
 
     /**
