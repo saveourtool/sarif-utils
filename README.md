@@ -38,6 +38,7 @@ in the manner, in which they are presented in `SARIF` (via absolute/relative pat
 ```kotlin
     val processedFiles: List<Path> = SarifFixAdapter(
                                         sarifFile = sarifFilePath,
-                                        targetFiles = listOfTargetFilesPaths
+                                        targetFiles = listOfTargetFilesPaths,
+                                        testRoot = "/directory/with/root/save.toml".toPath()
                                       ).process()
 ```
