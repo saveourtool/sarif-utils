@@ -39,6 +39,6 @@ in the manner, in which they are presented in `SARIF` (via absolute/relative pat
     val processedFiles: List<Path> = SarifFixAdapter(
                                         sarifFile = sarifFilePath,
                                         targetFiles = listOfTargetFilesPaths,
-                                        testRoot = "/directory/with/root/save.toml".toPath()
+                                        testRoot = "/path/to/test/root/directory/".toPath()
                                       ).process()
 ```
