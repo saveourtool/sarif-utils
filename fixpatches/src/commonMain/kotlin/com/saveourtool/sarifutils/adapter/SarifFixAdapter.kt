@@ -6,17 +6,17 @@
 package com.saveourtool.sarifutils.adapter
 
 import com.saveourtool.okio.Uri
+import com.saveourtool.okio.createDirectories
 import com.saveourtool.okio.isDirectory
+import com.saveourtool.okio.isSameFileAsSafe
 import com.saveourtool.okio.pathString
+import com.saveourtool.okio.relativeToSafe
 import com.saveourtool.sarifutils.config.FileReplacements
 import com.saveourtool.sarifutils.config.RuleReplacements
-import com.saveourtool.sarifutils.files.createDirectories
 import com.saveourtool.sarifutils.files.createTempDir
 import com.saveourtool.sarifutils.files.fs
-import com.saveourtool.sarifutils.files.isSameFileAsSafe
 import com.saveourtool.sarifutils.files.readFile
 import com.saveourtool.sarifutils.files.readLines
-import com.saveourtool.sarifutils.files.relativeToSafe
 import com.saveourtool.sarifutils.files.writeContentWithNewLinesToFile
 import com.saveourtool.sarifutils.net.toLocalPathExt
 import com.saveourtool.sarifutils.utils.getUriBaseIdForArtifactLocation
