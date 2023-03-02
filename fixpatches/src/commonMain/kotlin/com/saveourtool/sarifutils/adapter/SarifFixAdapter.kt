@@ -8,9 +8,9 @@ import com.saveourtool.okio.Uri
 import com.saveourtool.okio.absolute
 import com.saveourtool.okio.createDirectories
 import com.saveourtool.okio.isDirectory
-import com.saveourtool.okio.isSameFileAsSafe
 import com.saveourtool.okio.pathString
-import com.saveourtool.okio.relativeToSafe
+import com.saveourtool.okio.safeIsSameFileAs
+import com.saveourtool.okio.safeRelativeTo
 import com.saveourtool.sarifutils.config.FileReplacements
 import com.saveourtool.sarifutils.config.RuleReplacements
 import com.saveourtool.sarifutils.files.createTempDir
@@ -306,7 +306,7 @@ class SarifFixAdapter(
                 }
 
                 val matchingFile = targetFiles.find { targetFile ->
-                    targetFile.isSameFileAsSafe(absoluteLocalPath)
+                    targetFile.safeIsSameFileAs(absoluteLocalPath)
                 }
                 if (matchingFile == null) {
                     val targetFileCount = targetFiles.size
@@ -340,7 +340,7 @@ class SarifFixAdapter(
         // additionally create parent directories, before copy of content
         targetFileCopy.parent?.createDirectories()
 
-        check(!targetFile.isSameFileAsSafe(targetFileCopy)) {
+        check(!targetFile.safeIsSameFileAs(targetFileCopy)) {
             "Refusing to copy $targetFile onto itself."
         }
 
@@ -503,7 +503,7 @@ class SarifFixAdapter(
     private fun Path.relativeToTestRoot(): Path =
             when (testRoot) {
                 null -> this
-                else -> relativeToSafe(testRoot)
+                else -> safeRelativeTo(testRoot)
             }
 
     private fun Path.relativeToFileSystemRoot(): Path =
