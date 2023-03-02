@@ -61,13 +61,6 @@ jobs:
       - name: Status git after
         if: ${{ always() }}
         run: git status
-      - name: Upload artifact
-        id: upload_artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: sarif-utils-${{ runner.os }}
-          path: fixpatches/build/*
-          retention-days: 1
 
   github_release:
     needs: release
@@ -76,10 +69,6 @@ jobs:
     name: Create Github Release
     runs-on: ubuntu-latest
     steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v3
-        with:
-          path: tmpFolder
       - name: Create Github Release
         id: create_release
         uses: actions/create-release@v1
@@ -90,12 +79,3 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: false
           prerelease: false
-      - name: Upload sarif-utils
-        id: upload-release-asset
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: tmpFolder/**/*
-          tag: ${{ github.ref }}
-          overwrite: true
-          file_glob: true
