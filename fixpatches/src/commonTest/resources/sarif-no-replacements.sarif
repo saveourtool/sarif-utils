@@ -1,0 +1,62 @@
+{
+  "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/schemas/sarif-schema-2.1.0.json",
+  "runs": [
+    {
+      "invocations": [
+        {
+          "executionSuccessful": true,
+          "toolExecutionNotifications": []
+        }
+      ],
+      "results": [
+        {
+          "fixes": [
+            {
+              "artifactChanges": [
+                {
+                  "artifactLocation": {
+                    "uri": "targets/autofix/autofix.py"
+                  },
+                  "replacements": []
+                }
+              ],
+              "description": {
+                "text": "Use `.get()` method to avoid a KeyNotFound error\n Autofix: Semgrep rule suggested fix"
+              }
+            }
+          ],
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "targets/autofix/autofix.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {
+                  "endColumn": 16,
+                  "endLine": 5,
+                  "snippet": {
+                    "text": "  inputs[x] = 1"
+                  },
+                  "startColumn": 3,
+                  "startLine": 5
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Use `.get()` method to avoid a KeyNotFound error"
+          },
+          "ruleId": "rules.autofix.use-dict-get"
+        }
+      ],
+      "tool": {
+        "driver": {
+          "name": "semgrep",
+          "version": "placeholder"
+        }
+      }
+    }
+  ],
+  "version": "2.1.0"
+}
