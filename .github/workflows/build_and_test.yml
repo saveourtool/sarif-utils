@@ -94,6 +94,12 @@ jobs:
         with:
           name: gradle-reports-${{ matrix.os }}
           path: '**/build/reports/'
+      - name: Code coverage report
+        if: ${{ runner.os == 'Linux' }}
+        uses: codecov/codecov-action@v3
+        with:
+          flags: unittests
+          fail_ci_if_error: false # optional (default = false)
 
   report:
     name: Publish JUnit test results
