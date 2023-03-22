@@ -8,6 +8,9 @@ on:
 jobs:
   diktat_check:
     runs-on: ubuntu-latest
+    permissions:
+      # required for all workflows
+      security-events: write
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK 11
@@ -33,7 +36,7 @@ jobs:
           sarif_file: build/reports/diktat/diktat-merged.sarif
       - name: Upload SARIF artifacts
         uses: actions/upload-artifact@v3
-        if: ${{ always() }}
+        if: ${{ failure() }}
         with:
           name: sarif-reports
           path: "**/build/reports/diktat"
