@@ -24,3 +24,17 @@ jobs:
             -Pdetekt.multiplatform.disabled=true
             -Pdiktat.githubActions=true
             --continue
+            -PgprUser=${{ github.actor }}
+            -PgprKey=${{ secrets.GITHUB_TOKEN }}
+      - name: Upload SARIF report to Github
+        uses: github/codeql-action/upload-sarif@v2
+        if: ${{ always() }}
+        with:
+          sarif_file: build/reports/diktat/diktat-merged.sarif
+      - name: Upload SARIF artifacts
+        uses: actions/upload-artifact@v3
+        if: ${{ always() }}
+        with:
+          name: sarif-reports
+          path: "**/build/reports/diktat"
+          retention-days: 1
