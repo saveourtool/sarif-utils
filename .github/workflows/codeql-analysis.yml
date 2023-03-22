@@ -59,6 +59,6 @@ jobs:
       #    uses a compiled language
 
       - run: |
-          mvn clean install
+          ./gradlew clean build
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
