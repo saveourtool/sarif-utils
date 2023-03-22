@@ -23,6 +23,7 @@ fun Project.configureDetekt() {
     apply<DetektPlugin>()
     configure<DetektExtension> {
         config = rootProject.files("detekt.yml")
+        basePath = rootDir.canonicalPath
         buildUponDefaultConfig = true
     }
     if (path == rootProject.path) {
