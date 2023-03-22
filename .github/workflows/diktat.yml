@@ -8,6 +8,9 @@ on:
 jobs:
   diktat_check:
     runs-on: ubuntu-latest
+    permissions:
+      # required for all workflows
+      security-events: write
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK 11
@@ -24,3 +27,17 @@ jobs:
             -Pdetekt.multiplatform.disabled=true
             -Pdiktat.githubActions=true
             --continue
+            -PgprUser=${{ github.actor }}
+            -PgprKey=${{ secrets.GITHUB_TOKEN }}
+      - name: Upload SARIF report to Github
+        uses: github/codeql-action/upload-sarif@v2
+        if: ${{ always() }}
+        with:
+          sarif_file: build/reports/diktat/diktat-merged.sarif
+      - name: Upload SARIF artifacts
+        uses: actions/upload-artifact@v3
+        if: ${{ failure() }}
+        with:
+          name: sarif-reports
+          path: "**/build/reports/diktat"
+          retention-days: 1

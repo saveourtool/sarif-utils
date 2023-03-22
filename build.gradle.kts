@@ -1,3 +1,4 @@
+import com.saveourtool.sarifutils.buildutils.configureDetekt
 import com.saveourtool.sarifutils.buildutils.configureDiktat
 import com.saveourtool.sarifutils.buildutils.configurePublishing
 import com.saveourtool.sarifutils.buildutils.configureVersioning
@@ -12,6 +13,7 @@ plugins {
 configureVersioning()
 // checks and validations
 configureDiktat()
+configureDetekt()
 createDetektTask()
 installGitHooks()
 configurePublishing()
