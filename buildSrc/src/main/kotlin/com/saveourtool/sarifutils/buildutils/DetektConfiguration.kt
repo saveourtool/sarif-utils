@@ -25,17 +25,6 @@ fun Project.configureDetekt() {
         config = rootProject.files("detekt.yml")
         buildUponDefaultConfig = true
     }
-}
-
-/**
- * Register a unified detekt task
- */
-fun Project.createDetektTask() {
-    tasks.register("detektAll") {
-        allprojects {
-            this@register.dependsOn(tasks.withType<Detekt>())
-        }
-    }
     if (path == rootProject.path) {
         tasks.register("mergeDetektReports", ReportMergeTask::class) {
             output.set(buildDir.resolve("detekt-sarif-reports/detekt-merged.sarif"))
@@ -52,5 +41,16 @@ fun Project.createDetektTask() {
     tasks.withType<Detekt>().configureEach {
         reports.sarif.required.set(true)
         finalizedBy(reportMerge)
+    }
+}
+
+/**
+ * Register a unified detekt task
+ */
+fun Project.createDetektTask() {
+    tasks.register("detektAll") {
+        allprojects {
+            this@register.dependsOn(tasks.withType<Detekt>())
+        }
     }
 }
