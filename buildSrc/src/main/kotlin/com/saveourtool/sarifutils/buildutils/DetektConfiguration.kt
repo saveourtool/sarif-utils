@@ -36,8 +36,10 @@ fun Project.createDetektTask() {
             this@register.dependsOn(tasks.withType<Detekt>())
         }
     }
-    tasks.register("mergeDetektReports", ReportMergeTask::class) {
-        output.set(buildDir.resolve("detekt-sarif-reports/detekt-merged.sarif"))
+    if (path == rootProject.path) {
+        tasks.register("mergeDetektReports", ReportMergeTask::class) {
+            output.set(buildDir.resolve("detekt-sarif-reports/detekt-merged.sarif"))
+        }
     }
 
     @Suppress("GENERIC_VARIABLE_WRONG_DECLARATION")
