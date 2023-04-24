@@ -53,6 +53,8 @@ private fun Project.failOnUncleanTree() {
         .setup()
         .let(::FileRepository)
         .let(::Git)
+        .status()
+        .call()
     if (!status.isClean) {
         throw GradleException("Release build will be performed with not clean git tree; aborting. " +
                 "Untracked files: ${status.untracked}, uncommitted changes: ${status.uncommittedChanges}")
