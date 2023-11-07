@@ -7,13 +7,13 @@ diktat = "1.2.5"
 kotlinx-cli = "0.3.6"
 kotlinx-datetime = "0.4.1"
 kotlinx-coroutines = "1.6.3-native-mt"
-junit = "5.10.0"
+junit = "5.10.1"
 multiplatform-diff = "0.4.0"
 kotlinpoet = "1.14.2"
 sarif4k = "0.5.0"
 kotlin-logging = "3.0.5"
 log4j = "2.21.1"
-kotest = "5.7.2"
+kotest = "5.8.0"
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
