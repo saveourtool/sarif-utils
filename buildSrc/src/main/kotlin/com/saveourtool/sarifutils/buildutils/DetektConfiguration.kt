@@ -22,7 +22,7 @@ import org.gradle.kotlin.dsl.withType
 fun Project.configureDetekt() {
     apply<DetektPlugin>()
     configure<DetektExtension> {
-        config = rootProject.files("detekt.yml")
+        config.setFrom(rootProject.files("detekt.yml"))
         basePath = rootDir.canonicalPath
         buildUponDefaultConfig = true
     }
