@@ -25,7 +25,9 @@ kotlin {
             }
         }
     }
-    val nativeTargets = listOf(linuxX64(), mingwX64(), macosX64())
+    linuxX64()
+    mingwX64()
+    macosX64()
 
     if (hasProperty("disableRedundantTargets") && (property("disableRedundantTargets") as String?) != "false") {
         // with this flag we exclude targets that are present on multiple OS to speed up build
@@ -43,54 +45,21 @@ kotlin {
             }
     }
 
-    /*
-     * Common structure for MPP libraries:
-     *            common
-     *              |
-     *            nonJs
-     *          /       \
-     *       native      JVM
-     *     /   |    \
-     * linux  mingw macos
-     */
     sourceSets {
         all {
             languageSettings.optIn("kotlin.RequiresOptIn")
         }
-        val commonMain by getting
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
             }
         }
-        val commonNonJsMain by creating {
-            dependsOn(commonMain)
-        }
-        val commonNonJsTest by creating {
-            dependsOn(commonTest)
-        }
-        val jvmMain by getting {
-            dependsOn(commonNonJsMain)
-        }
         val jvmTest by getting {
-            dependsOn(commonNonJsTest)
             dependencies {
                 implementation(kotlin("test-junit5"))
                 implementation("org.junit.jupiter:junit-jupiter-engine:5.10.1")
             }
-        }
-        val nativeMain by creating {
-            dependsOn(commonNonJsMain)
-        }
-        val nativeTest by creating {
-            dependsOn(commonNonJsTest)
-        }
-        nativeTargets.forEach {
-            getByName("${it.name}Main").dependsOn(nativeMain)
-        }
-        nativeTargets.forEach {
-            getByName("${it.name}Test").dependsOn(nativeTest)
         }
     }
 }
