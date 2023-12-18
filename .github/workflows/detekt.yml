@@ -26,11 +26,11 @@ jobs:
             -PgprKey=${{ secrets.GITHUB_TOKEN }}
       - name: Upload SARIF to Github
         if: ${{ always() }}
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: build/detekt-sarif-reports/detekt-merged.sarif
       - name: Upload SARIF artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: ${{ failure() }}
         with:
           name: sarif-reports
