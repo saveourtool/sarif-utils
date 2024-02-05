@@ -35,7 +35,7 @@ jobs:
       - name: gradle release from tag
         # if workflow is triggered after push of a tag, deploy full release
         if: ${{ github.ref_type == 'tag' }}
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           gradle-version: wrapper
           arguments: |
@@ -48,7 +48,7 @@ jobs:
       - name: gradle snapshot from branch
         # if workflow is triggered after push to a branch, deploy snapshot
         if: ${{ github.ref_type == 'branch' }}
-        uses: gradle/gradle-build-action@v2
+        uses: gradle/gradle-build-action@v3
         with:
           gradle-version: wrapper
           arguments: |
