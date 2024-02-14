@@ -7,14 +7,6 @@ plugins {
 
 repositories {
     mavenCentral()
-    maven {
-        name = "saveourtool/okio-extras"
-        url = uri("https://maven.pkg.github.com/saveourtool/okio-extras")
-        credentials {
-            username = project.findProperty("gprUser") as String? ?: System.getenv("GITHUB_ACTOR")
-            password = project.findProperty("gprKey") as String? ?: System.getenv("GITHUB_TOKEN")
-        }
-    }
 }
 
 kotlin {
