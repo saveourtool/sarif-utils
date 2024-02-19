@@ -15,5 +15,5 @@ dependencies {
     implementation(libs.kotlin.gradle.plugin)
     implementation(libs.kotlin.plugin.serialization)
     implementation("io.github.gradle-nexus:publish-plugin:1.3.0")
-    implementation("org.ajoberstar.reckon:reckon-gradle:0.18.2")
+    implementation("org.ajoberstar.reckon:reckon-gradle:0.18.3")
 }
