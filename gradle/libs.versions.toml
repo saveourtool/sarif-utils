@@ -13,7 +13,7 @@ kotlinpoet = "1.16.0"
 sarif4k = "0.6.0"
 kotlin-logging = "3.0.5"
 log4j = "2.23.1"
-kotest = "5.8.1"
+kotest = "5.9.0"
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
